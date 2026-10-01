@@ -5,20 +5,22 @@ test('the theme switcher applies, remembers and URL-overrides the theme', async 
     await page.goto('/');
     await expect(html).not.toHaveAttribute('data-theme');
 
-    await page.getByRole('button', { name: 'C', exact: true }).click();
-    await expect(html).toHaveAttribute('data-theme', 'harmonies-soft');
-    await expect(page.getByRole('button', { name: 'C', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'B', exact: true }).click();
+    await expect(html).toHaveAttribute('data-theme', 'harmonies-bold');
+    await expect(page.getByRole('button', { name: 'B', exact: true })).toHaveAttribute('aria-pressed', 'true');
 
     await page.reload();
-    await expect(html).toHaveAttribute('data-theme', 'harmonies-soft');
+    await expect(html).toHaveAttribute('data-theme', 'harmonies-bold');
+
+    await page.goto('/rules?theme=box-art');
+    await expect(html).not.toHaveAttribute('data-theme');
+    await page.goto('/rules');
+    await expect(html).not.toHaveAttribute('data-theme');
 
     await page.goto('/rules?theme=harmonies-bold');
     await expect(html).toHaveAttribute('data-theme', 'harmonies-bold');
-    await page.goto('/rules');
-    await expect(html).toHaveAttribute('data-theme', 'harmonies-bold');
-
     await page.getByRole('button', { name: 'Box-art', exact: true }).click();
     await expect(html).not.toHaveAttribute('data-theme');
-    await page.reload();
+    await page.goto('/rules'); // not reload(): that would keep ?theme= and re-apply B
     await expect(html).not.toHaveAttribute('data-theme');
 });

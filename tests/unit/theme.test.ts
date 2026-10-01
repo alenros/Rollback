@@ -19,9 +19,9 @@ describe('parseTheme', () => {
 describe('applyTheme / currentTheme', () => {
     it('sets data-theme for a trial theme', () => {
         const root = fakeRoot();
-        applyTheme(root, 'harmonies-soft');
-        expect(root.dataset.theme).toBe('harmonies-soft');
-        expect(currentTheme(root)).toBe('harmonies-soft');
+        applyTheme(root, 'harmonies-bold');
+        expect(root.dataset.theme).toBe('harmonies-bold');
+        expect(currentTheme(root)).toBe('harmonies-bold');
     });
     it('removes data-theme for box-art, the default', () => {
         const root = fakeRoot('harmonies-bold');

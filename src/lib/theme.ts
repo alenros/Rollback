@@ -1,5 +1,5 @@
 // Trial themes: chosen by data-theme on <html> and remembered per browser. Box-art is the default (no attribute).
-export const THEMES = ['box-art', 'harmonies-bold', 'harmonies-soft'] as const;
+export const THEMES = ['box-art', 'harmonies-bold'] as const;
 export type Theme = (typeof THEMES)[number];
 
 export const THEME_KEY = 'rollback-theme';
@@ -7,7 +7,6 @@ export const THEME_KEY = 'rollback-theme';
 export const THEME_LABELS: Record<Theme, { short: string; title: string }> = {
     'box-art': { short: 'Box-art', title: 'Box-art (current look)' },
     'harmonies-bold': { short: 'B', title: 'B: recolored box-art' },
-    'harmonies-soft': { short: 'C', title: 'C: painterly-lite' },
 };
 
 export function parseTheme(value: unknown): Theme | null {
