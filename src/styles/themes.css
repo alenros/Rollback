@@ -444,3 +444,326 @@ html[data-theme="cuphead-cardtable"] .rules tbody tr:last-child > * { border-bot
 /* A selected die's underline gets rounded ends; the switcher pill gets a gold rim so it reads on the dark page. */
 html[data-theme="cuphead-cardtable"] .die.selected::after { border-radius: 999px; height: 6px; }
 html[data-theme="cuphead-cardtable"] .theme-switcher { border-radius: 8px; box-shadow: 0 0 0 2px var(--gold), 0 6px 16px rgba(0, 0, 0, 0.5); }
+
+/* ---------------------------------------------------------------- Cuphead A: cuphead-casino
+   Hell of a Deal box cover, full dark: a near-black plum page with film grain inside a red art-deco frame with a thin
+   gold inner rule and red diamonds, red rails with a gold diamond chain on wide screens, and hellfire licking up the
+   foot of the page (in the shell's bottom padding, never under text). Gold-foil Rye title over oxblood, dark velvet
+   panels with a gold border and an oxblood ring, Limelight headings, Oswald casino buttons, green felt table, poker-chip
+   dice. --ink stays near-black because it is every outline, die stroke and button edge, so text on the dark page and
+   panels is set to cream explicitly; --paper is the page, --panel the velvet (also secondary buttons). */
+
+html[data-theme="cuphead-casino"] {
+    color-scheme: dark;
+    --paper: #140c19;
+    --ink: #0c0613;
+    --panel: #22131f;
+    --tomato: #e12125;
+    --tomato-dark: #b8181c;
+    --petrol: #154a2f;
+    --marker: #e9ce80;
+    --muted: #c9b48e;
+    --wash: #3a2233;
+    --rule: rgba(189, 154, 67, 0.32);
+    --on-tomato: #fffaf0;
+    --on-petrol: #f3e6c8;
+    --table-hint: #cfe3cf;
+    --title: #e9ce80;
+    --accent-text: #ff5148;
+
+    /* Casino extras. */
+    --cream: #f3e6c8;
+    --gold: #bd9a43;
+    --foil: #e9ce80;
+    --oxblood: #831e20;
+    --well: #140c19;
+    --felt: #22663f;
+    --gold-rule: rgba(189, 154, 67, 0.62); /* 3.2:1 on the velvet */
+
+    --die-red: #e12125;
+    --die-blue: #2f56b0;
+    --die-green: #2b8539;
+    --die-yellow: #f2c230;
+    --die-stroke: 6;
+
+    --display: 'Alfa Slab One', 'Rockwell Extra Bold', 'Arial Black', serif;
+    --body: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --display-tracking: 0.5px;
+    --line: 2px;
+    --line-thin: 2px;
+    --radius: 4px;
+    --radius-sm: 2px;
+    --shadow: 0 3px 0 var(--oxblood);
+    --shadow-sm: 0 2px 0 var(--oxblood);
+    /* Every panel: a black gap, then an oxblood ring, then a soft drop. */
+    --shadow-lg: 0 0 0 4px var(--paper), 0 0 0 5px var(--oxblood), 0 12px 28px rgba(0, 0, 0, 0.6);
+    --shadow-hover: 0 0 0 4px var(--paper), 0 0 0 6px var(--tomato), 0 14px 30px rgba(0, 0, 0, 0.65);
+    --shadow-turn: 0 0 0 4px var(--paper), 0 0 0 7px var(--tomato), 0 0 34px rgba(255, 90, 31, 0.5);
+    --title-shadow: 2px 2px 0 var(--oxblood), 3px 3px 0 #000;
+    --title-shadow-lg: 4px 4px 0 var(--oxblood), 6px 6px 0 #000;
+    --press: translateY(3px);
+    --lift: translateY(-3px);
+    --tilt: -2deg;
+}
+
+/* The page: plum black with pale film grain. Decorations hang off body pseudo-elements behind the content
+   (isolation keeps them above the page background); the shell gets a deeper foot so the fire has room. */
+html[data-theme="cuphead-casino"] body {
+    position: relative;
+    isolation: isolate;
+    color: var(--cream);
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .95 0 0 0 0 .88 0 0 0 0 .74 0 0 0 .45 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+        var(--paper);
+}
+html[data-theme="cuphead-casino"] .shell { padding-bottom: 120px; }
+
+/* The frame: a red rule with a thin gold rule inside it. Thin on narrow screens (it stays inside the 16px gutter), the
+   full cover frame where the margins are wide; there, red rails with a gold diamond chain run down both sides. */
+html[data-theme="cuphead-casino"] body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 6px var(--tomato), inset 0 0 0 9px var(--paper), inset 0 0 0 10px var(--gold);
+}
+@media (min-width: 1180px) {
+    html[data-theme="cuphead-casino"] body::before {
+        box-shadow: inset 0 0 0 10px var(--paper), inset 0 0 0 13px var(--tomato), inset 0 0 0 19px var(--paper), inset 0 0 0 21px var(--gold);
+    }
+}
+@media (min-width: 1276px) {
+    html[data-theme="cuphead-casino"] body::before {
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='40' viewBox='0 0 48 40'%3E%3Cpath fill='%23e12125' d='M0 0h3v40H0zM45 0h3v40h-3z'/%3E%3Cpath fill='none' stroke='%23bd9a43' stroke-width='1.5' d='M24 1L42 20L24 39L6 20Z'/%3E%3Cpath fill='%23e12125' d='M24 14L30 20L24 26L18 20Z'/%3E%3C/svg%3E") left 30px top 0 / 48px 40px repeat-y, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='40' viewBox='0 0 48 40'%3E%3Cpath fill='%23e12125' d='M0 0h3v40H0zM45 0h3v40h-3z'/%3E%3Cpath fill='none' stroke='%23bd9a43' stroke-width='1.5' d='M24 1L42 20L24 39L6 20Z'/%3E%3Cpath fill='%23e12125' d='M24 14L30 20L24 26L18 20Z'/%3E%3C/svg%3E") right 30px top 0 / 48px 40px repeat-y;
+    }
+}
+/* Red-and-gold diamonds where the frame crosses the top and bottom centre: a second fixed layer, since the frame's
+   inset shadows would paint over its own background. */
+html[data-theme="cuphead-casino"] .shell::before {
+    --diamond: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Crect x='5' width='30' height='24' fill='%23140c19'/%3E%3Cpath fill='%23e12125' d='M20 1L31 12L20 23L9 12Z'/%3E%3Cpath fill='%23e9ce80' d='M20 7L25 12L20 17L15 12Z'/%3E%3C/svg%3E");
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--diamond) center top / 22px 13px no-repeat, var(--diamond) center bottom / 22px 13px no-repeat;
+}
+@media (min-width: 1180px) {
+    html[data-theme="cuphead-casino"] .shell::before { background-size: 40px 24px; background-position: center top 0, center bottom 0; }
+}
+/* Hellfire along the foot of the page: cartoon flame tongues over a red glow, inside the shell's bottom padding.
+   It sits under the frame (z-index -2) so the frame reads as being in front of the fire, like the cover. */
+html[data-theme="cuphead-casino"] body::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 104px;
+    z-index: -2;
+    pointer-events: none;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='100' viewBox='0 0 320 100' overflow='hidden'%3E%3Cpath fill='%23e12125' d='M-9 100C-11 69 12 63 5 42C2 33 7 29 5 26C29 47 46 67 45 100ZM311 100C309 69 332 63 325 42C322 33 327 29 325 26C349 47 366 67 365 100ZM39 100C38 64 63 57 58 33C58 22 63 18 62 14C83 38 99 61 98 100ZM103 100C102 70 121 64 123 44C127 35 132 32 132 28C140 48 150 68 149 100ZM154 100C152 59 175 52 169 25C167 13 171 8 170 3C192 30 209 57 208 100ZM210 100C209 59 228 51 222 24C221 12 225 8 224 3C242 30 256 56 254 100ZM258 100C257 69 278 63 273 43C272 34 276 30 276 27C294 47 308 67 307 100Z'/%3E%3Cpath fill='%23ff8a1f' d='M27 100C26 79 42 75 36 61C34 55 36 52 35 50C53 64 65 77 64 100ZM71 100C70 75 88 71 92 54C96 47 101 45 102 42C107 58 114 74 113 100ZM122 100C121 77 138 73 131 57C128 51 131 48 130 45C149 61 162 75 161 100ZM158 100C157 75 175 70 180 53C184 46 190 43 191 39C194 56 201 73 200 100ZM207 100C206 70 222 64 224 44C227 36 232 32 233 29C238 49 245 68 244 100ZM251 100C250 71 268 65 260 45C258 37 261 33 260 30C279 49 293 68 292 100ZM300 100C299 71 316 66 321 46C325 38 330 35 331 31C334 51 341 69 340 100ZM-20 100C-21 71 -4 66 1 46C5 38 10 35 11 31C14 51 21 69 20 100Z'/%3E%3Cpath fill='%23ffcf4a' d='M-5 100C-6 87 8 84 12 76C16 72 20 70 21 69C23 78 28 86 27 100ZM315 100C314 87 328 84 332 76C336 72 340 70 341 69C343 78 348 86 347 100ZM42 100C41 90 55 88 58 82C61 79 65 78 66 77C69 83 74 90 73 100ZM88 100C87 85 98 82 101 72C105 68 108 66 109 65C109 75 113 84 112 100ZM135 100C135 87 146 84 149 75C151 71 155 70 156 68C158 77 162 86 162 100ZM173 100C173 87 187 85 182 77C181 73 183 72 182 70C197 79 207 87 206 100ZM225 100C224 88 235 86 241 79C245 75 249 74 250 72C248 80 251 88 250 100ZM268 100C267 87 279 85 285 76C290 73 294 71 295 70C293 78 296 86 295 100Z'/%3E%3C/svg%3E") left 0 bottom 0 / 320px 100px repeat-x,
+        linear-gradient(0deg, rgba(225, 33, 37, 0.85), rgba(225, 33, 37, 0.35) 55%, rgba(131, 30, 32, 0));
+    -webkit-mask-image: linear-gradient(0deg, #000 45%, rgba(0, 0, 0, 0.35) 85%, transparent);
+    mask-image: linear-gradient(0deg, #000 45%, rgba(0, 0, 0, 0.35) 85%, transparent);
+}
+
+/* Gold-foil Rye title over an oxblood drop; the gradient fill only where background-clip: text works. */
+html[data-theme="cuphead-casino"] :where(.wordmark, .cover-title, .rules h1) {
+    font-family: 'Rye', 'Alfa Slab One', serif;
+    font-weight: 400;
+    color: var(--foil);
+}
+html[data-theme="cuphead-casino"] .wordmark { letter-spacing: 1.5px; }
+html[data-theme="cuphead-casino"] .wordmark:hover { color: #f6e3a1; }
+html[data-theme="cuphead-casino"] .cover-title { font-size: clamp(46px, 12.5vw, 120px); letter-spacing: 3px; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    html[data-theme="cuphead-casino"] :where(.wordmark, .cover-title, .rules h1) {
+        background: linear-gradient(180deg, #f6e3a1 10%, #e9ce80 35%, #bd9a43 62%, #8a6a2a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: none;
+    }
+    html[data-theme="cuphead-casino"] :where(.wordmark, .rules h1) { filter: drop-shadow(2px 2px 0 #831e20) drop-shadow(1px 1px 0 #000); }
+    html[data-theme="cuphead-casino"] .wordmark:hover { filter: drop-shadow(2px 2px 0 #e12125) drop-shadow(1px 1px 0 #000); }
+    html[data-theme="cuphead-casino"] .cover-title { filter: drop-shadow(4px 4px 0 #831e20) drop-shadow(2px 2px 0 #000); }
+}
+@media (max-width: 600px) {
+    html[data-theme="cuphead-casino"] .cover-title { filter: drop-shadow(3px 3px 0 #831e20) drop-shadow(1px 1px 0 #000); }
+}
+
+/* Cover: a spade-diamond-heart crest between gold rules over the title, and an oxblood plate under it, like the
+   cover's "of a" banner. */
+html[data-theme="cuphead-casino"] .cover::before {
+    content: '\2660   \25C6   \2665';
+    display: block;
+    width: min(380px, 86%);
+    margin: 0 auto 10px;
+    white-space: pre;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--gold);
+    background:
+        linear-gradient(var(--gold), var(--gold)) left center / 30% 2px no-repeat,
+        linear-gradient(var(--gold), var(--gold)) right center / 30% 2px no-repeat;
+}
+html[data-theme="cuphead-casino"] .cover-tagline { color: var(--cream); }
+html[data-theme="cuphead-casino"] .cover-tagline::before {
+    content: '\25C6  The Devil\2019s Dice  \25C6';
+    display: table;
+    margin: 0 auto 14px;
+    padding: 5px 16px 4px;
+    white-space: pre;
+    font-family: 'Limelight', 'Rye', serif;
+    font-size: 16px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--foil);
+    background: var(--oxblood);
+    border: 2px solid var(--gold);
+    border-radius: 2px;
+    box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--tomato);
+}
+
+/* Top bar: a gold rule over a red rule, with a red-and-gold diamond in the middle. */
+html[data-theme="cuphead-casino"] .topbar {
+    position: relative;
+    border-bottom: 2px solid var(--gold);
+    box-shadow: 0 3px 0 var(--paper), 0 6px 0 var(--tomato);
+    margin-bottom: 32px;
+}
+html[data-theme="cuphead-casino"] .topbar::after {
+    content: '\25C6';
+    position: absolute;
+    left: 50%;
+    bottom: -3px;
+    transform: translate(-50%, 50%);
+    padding: 0 6px;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--tomato);
+    background: var(--paper);
+    -webkit-text-stroke: 1.5px var(--foil);
+}
+
+/* Text on the dark page and panels is cream; links are gold foil. */
+html[data-theme="cuphead-casino"] :where(a:not(.tag)) { color: var(--foil); }
+html[data-theme="cuphead-casino"] :where(a:not(.tag)):hover { color: var(--accent-text); }
+html[data-theme="cuphead-casino"] :where(a):focus-visible { outline: 3px solid var(--marker); outline-offset: 4px; }
+html[data-theme="cuphead-casino"] :where(h2, h3) { font-family: 'Limelight', 'Alfa Slab One', serif; color: var(--foil); letter-spacing: 1.5px; }
+html[data-theme="cuphead-casino"] .panel h3 { font-size: 18px; }
+html[data-theme="cuphead-casino"] .rules h3 { font-size: 18px; }
+/* The lobby's "Rules" heading wraps its label: keep it inline so it reads as the heading, beside its diamond. */
+html[data-theme="cuphead-casino"] .panel h3 > label { display: inline; margin: 0; font: inherit; letter-spacing: inherit; color: inherit; text-transform: inherit; }
+html[data-theme="cuphead-casino"] :where(label, .label) { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 600; letter-spacing: 1.5px; font-size: 14px; color: var(--foil); }
+
+/* Panels: dark velvet with a gold border, a black gap and an oxblood ring, and a red diamond before each heading. */
+html[data-theme="cuphead-casino"] :where(.panel, .rules, .ruleset-card) {
+    background: radial-gradient(ellipse 120% 90% at 50% 0, #2a1726, var(--panel) 70%);
+    border-color: var(--gold);
+    color: var(--cream);
+}
+html[data-theme="cuphead-casino"] :where(.panel, .rules) { box-shadow: var(--shadow-lg); }
+html[data-theme="cuphead-casino"] body.my-turn .hand-panel { box-shadow: var(--shadow-turn); }
+html[data-theme="cuphead-casino"] .panel h3::before { content: '\25C6'; margin-right: 8px; font-size: 0.8em; color: var(--tomato); vertical-align: 0.06em; }
+html[data-theme="cuphead-casino"] :where(.player, .seat, .round-results li) { border-bottom-color: var(--gold-rule); }
+html[data-theme="cuphead-casino"] .standings :where(th, td) { border-bottom-color: var(--gold-rule); }
+html[data-theme="cuphead-casino"] .turn-name { color: var(--accent-text); }
+
+/* Rules index cards. */
+html[data-theme="cuphead-casino"] .ruleset-card { box-shadow: var(--shadow-lg); }
+html[data-theme="cuphead-casino"] .ruleset-card:hover { color: var(--cream); box-shadow: var(--shadow-hover); }
+html[data-theme="cuphead-casino"] .ruleset-card strong { font-family: 'Limelight', 'Alfa Slab One', serif; letter-spacing: 1.5px; font-size: 22px; color: var(--foil); }
+
+/* Green felt card table with a gold rim and a thin inset gold line. */
+html[data-theme="cuphead-casino"] .table-panel {
+    color: var(--on-petrol);
+    background: radial-gradient(ellipse at 50% 35%, var(--felt), var(--petrol) 78%);
+    box-shadow: inset 0 0 0 7px var(--petrol), inset 0 0 0 8.5px rgba(233, 206, 128, 0.55), var(--shadow-lg);
+}
+html[data-theme="cuphead-casino"] .table-panel h3 { color: #f2dc98; } /* a lighter foil: 5.1:1 on the felt */
+html[data-theme="cuphead-casino"] .table-panel h3::before { color: var(--foil); }
+
+/* Lobby ticket: a gold casino ticket with ink lettering. */
+html[data-theme="cuphead-casino"] .ticket { color: var(--ink); border-color: var(--ink); background: var(--marker); }
+html[data-theme="cuphead-casino"] .ticket .label { color: var(--ink); }
+html[data-theme="cuphead-casino"] .ticket button:focus-visible { outline-color: var(--ink); }
+
+/* Oswald casino buttons: devil-red primary over an oxblood step; secondary is velvet with a gold border. */
+html[data-theme="cuphead-casino"] button:not(.die) {
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--cream);
+    border-color: var(--gold);
+}
+html[data-theme="cuphead-casino"] button.primary { color: var(--on-tomato); border-color: var(--ink); box-shadow: 0 4px 0 var(--oxblood); text-shadow: 0 1px 0 var(--oxblood); }
+html[data-theme="cuphead-casino"] :is(.chip.active, .theme-switcher .chip[aria-pressed="true"]) { color: var(--ink); border-color: var(--ink); }
+html[data-theme="cuphead-casino"] .chip.active:hover:not(:disabled) { background: #f6e3a1; }
+
+/* Inputs: a darker well with a gold border and cream text. */
+html[data-theme="cuphead-casino"] :where(input, select) { color: var(--cream); background-color: var(--well); border-color: var(--gold); }
+html[data-theme="cuphead-casino"] select:disabled { color: var(--muted); background-color: var(--wash); border-color: var(--gold-rule); }
+html[data-theme="cuphead-casino"] input::placeholder { color: #a8957a; opacity: 1; }
+
+/* Dice: ink outlines stay, the offset shadow turns gold so every chip colour lifts off the velvet, plus a faint gold
+   glow. Selected dice keep the red shadow and get a gold-foil underline. */
+html[data-theme="cuphead-casino"] .die-shadow > * { fill: var(--gold); }
+html[data-theme="cuphead-casino"] .die-shape { filter: drop-shadow(0 0 3px rgba(233, 206, 128, 0.35)); }
+/* Gold reads too dark against the felt, so dice on the table get a pale foil shadow. */
+html[data-theme="cuphead-casino"] .table-panel .die-shadow > * { fill: var(--foil); }
+html[data-theme="cuphead-casino"] .die.selected .die-shadow > * { fill: var(--tomato); }
+html[data-theme="cuphead-casino"] .die.selected .die-shape { filter: drop-shadow(0 0 6px rgba(255, 138, 31, 0.55)); }
+html[data-theme="cuphead-casino"] .die.selected::after { background: var(--foil); border-radius: 999px; height: 6px; box-shadow: 0 0 8px rgba(255, 138, 31, 0.6); }
+
+/* Tags and badges: gold chips with black lettering; the turn sticker is pale foil with a red glow. */
+html[data-theme="cuphead-casino"] :where(.tag, .badge, .player-status) {
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 13px;
+}
+html[data-theme="cuphead-casino"] :where(.tag, .badge) { background: var(--gold); color: var(--paper); border: 1.5px solid var(--ink); }
+html[data-theme="cuphead-casino"] :where(.tag-marker, .badge-turn, .player-status) { background: var(--foil); color: var(--ink); border: var(--line-thin) solid var(--ink); }
+html[data-theme="cuphead-casino"] .turn-tag { font-size: 18px; box-shadow: 0 0 0 2px var(--tomato), 0 0 18px rgba(255, 90, 31, 0.75); }
+html[data-theme="cuphead-casino"] .badge-out { background: var(--tomato); color: var(--on-tomato); }
+html[data-theme="cuphead-casino"] .badge-passed { background: #4a3340; color: var(--cream); border-color: var(--gold-rule); }
+html[data-theme="cuphead-casino"] .badge-table { background: var(--petrol); color: var(--on-petrol); border-color: var(--gold); }
+
+/* The current seat is oxblood velvet with a gold border and a red glow; seats are cards on phones. */
+html[data-theme="cuphead-casino"] .seat.is-turn {
+    background: linear-gradient(180deg, #8f2326, var(--oxblood));
+    border-color: var(--gold);
+    border-radius: 3px;
+    box-shadow: 0 0 14px rgba(225, 33, 37, 0.5);
+}
+@media (max-width: 700px) {
+    html[data-theme="cuphead-casino"] .seat { border-color: var(--gold-rule); border-radius: 3px; }
+    html[data-theme="cuphead-casino"] .seat.is-turn { border-color: var(--gold); }
+}
+
+/* The message strip: devil red with a gold rim. */
+html[data-theme="cuphead-casino"] #message-area.visible {
+    border-radius: var(--radius);
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 15px;
+    box-shadow: 0 0 0 2px var(--gold), 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Rulebook: velvet page, gold-foil title, red-over-gold rule under each section, an oxblood-headed gold table. */
+html[data-theme="cuphead-casino"] .rules h1 { letter-spacing: 1px; }
+html[data-theme="cuphead-casino"] .rules h2 { border-bottom: 2px solid var(--tomato); box-shadow: 0 3px 0 var(--panel), 0 4px 0 var(--gold); padding-bottom: 6px; }
+html[data-theme="cuphead-casino"] .rules table { border-color: var(--gold); border-collapse: separate; border-spacing: 0; border-radius: 4px; overflow: hidden; }
+html[data-theme="cuphead-casino"] .rules :is(th, td) { border-color: var(--gold-rule); border-width: 0 var(--line-thin) var(--line-thin) 0; }
+html[data-theme="cuphead-casino"] .rules tr > :last-child { border-right-width: 0; }
+html[data-theme="cuphead-casino"] .rules tbody tr:last-child > * { border-bottom-width: 0; }
+html[data-theme="cuphead-casino"] .rules th { background: var(--oxblood); color: var(--cream); }
+html[data-theme="cuphead-casino"] .rules-index > .hint { color: var(--muted); }
+
+/* The switcher pill: velvet with a gold border and ring so it reads on the dark page. */
+html[data-theme="cuphead-casino"] .theme-switcher { border-color: var(--gold); box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--oxblood), 0 6px 16px rgba(0, 0, 0, 0.6); }
