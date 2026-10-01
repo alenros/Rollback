@@ -54,7 +54,7 @@ export interface GameState {
 }
 
 export type Action =
-    | { type: 'play'; playerId: string; dieIds: string[] }
+    | { type: 'play'; playerId: string; dieIds: string[]; takeBackId?: string }
     | { type: 'pass'; playerId: string; rerollIds: string[] }
     | { type: 'pickup'; playerId: string; dieId: string };
 
@@ -158,13 +158,13 @@ function dealRound(state: GameState, leader: string, rng: Rng): GameState {
 export function applyAction(state: GameState, action: Action, rng: Rng = Math.random): GameState {
     if (state.phase !== 'playing') throw new GameError('The round is over');
     if (state.turn !== action.playerId) throw new GameError("It's not your turn");
-    const next = action.type === 'play' ? applyPlay(state, action.playerId, action.dieIds, rng)
+    const next = action.type === 'play' ? applyPlay(state, action.playerId, action.dieIds, rng, action.takeBackId)
         : action.type === 'pass' ? applyPass(state, action.playerId, action.rerollIds, rng)
         : applyPickup(state, action.playerId, action.dieId, rng);
     return { ...next, seq: state.seq + 1 };
 }
 
-function applyPlay(state: GameState, playerId: string, dieIds: string[], rng: Rng): GameState {
+function applyPlay(state: GameState, playerId: string, dieIds: string[], rng: Rng, takeBackId?: string): GameState {
     const hand = state.hands[playerId] ?? [];
     const rules = rulesOf(state);
     const dice = pickDice(hand, dieIds);
@@ -184,7 +184,14 @@ function applyPlay(state: GameState, playerId: string, dieIds: string[], rng: Rn
         if (!rules.beats(play, tablePlay)) {
             throw new GameError(`${describePlay(play)} does not beat ${describePlay(tablePlay)}`);
         }
-        if (play.kind === 'bomb') {
+        if (play.kind === 'bomb' && rules.bombPenalty && remaining.length > 0) {
+            // A costly bomb: take back one of the bombed dice (bomber's choice), rerolled.
+            const taken = bombPenaltyDie(state.table.dice, takeBackId);
+            pickedUp = [roll(taken, rng)];
+            remaining = [...remaining, ...pickedUp];
+            log = appendLog(state.log, `${name} bombs ${describePlay(tablePlay)} with ${describePlay(play)}`
+                + ` and must take back a ${taken.color} d${taken.sides}.`);
+        } else if (play.kind === 'bomb') {
             // A bomb takes nothing back: the bombed dice leave the round with the table.
             log = appendLog(state.log, `${name} bombs ${describePlay(tablePlay)} with ${describePlay(play)}!`);
         } else if (remaining.length === 0) {
@@ -216,6 +223,14 @@ function applyPlay(state: GameState, playerId: string, dieIds: string[], rng: Rn
     // A bomb clears the table at once; the bomber (or, if out, the next player on their left) leads.
     if (play.kind === 'bomb') return endTrick(next);
     return advanceTurn(next, playerId);
+}
+
+/** The bombed die the bomber takes back: their pick, or the only one there is. */
+function bombPenaltyDie(bombed: readonly Die[], takeBackId?: string): Die {
+    if (bombed.length === 1) return bombed[0];
+    const die = bombed.find(d => d.id === takeBackId);
+    if (!die) throw new GameError('A bomb costs a die here: choose one of the table dice to take back');
+    return die;
 }
 
 function applyPass(state: GameState, playerId: string, rerollIds: string[], rng: Rng): GameState {

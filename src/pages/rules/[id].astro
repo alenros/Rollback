@@ -2,12 +2,14 @@
 import Layout from '../../components/Layout.astro';
 import { Content as ClassicRules } from '../../../Rules.classic.md';
 import { Content as ColorsRules } from '../../../Rules.md';
+import { Content as ColorsBombPenaltyRules } from '../../../Rules.colors-bomb-penalty.md';
 import { RULESETS, type RulesetId } from '../../lib/rulesets';
 
 /** One rules document per ruleset. */
 const DOCS: Record<RulesetId, typeof ClassicRules> = {
     classic: ClassicRules,
     colors: ColorsRules,
+    'colors-bomb-penalty': ColorsBombPenaltyRules,
 };
 
 export function getStaticPaths() {

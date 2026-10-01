@@ -200,7 +200,7 @@ import Layout from '../components/Layout.astro';
         });
 
         playBtn.addEventListener('click', () => run(() =>
-            sendAction(roomCode, { type: 'play', playerId: view.meId, dieIds: [...view.selection] })));
+            sendAction(roomCode, { type: 'play', playerId: view.meId, dieIds: [...view.selection], takeBackId: view.tableSelection ?? undefined })));
 
         passBtn.addEventListener('click', () => run(() =>
             sendAction(roomCode, { type: 'pass', playerId: view.meId, rerollIds: [...view.selection] })));

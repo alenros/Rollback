@@ -114,8 +114,8 @@ export function renderTable(state: GameState, view: ViewState): string {
     }
     const rules = rulesOf(state);
     const play = rules.classifyPlay(state.table.dice)!;
-    // On your turn the table dice are clickable, to pick one up (if the ruleset allows it).
-    const selectable = rules.pickup && state.phase === 'playing' && state.turn === view.meId;
+    // On your turn the table dice are clickable: to pick one up, or to choose a bomb's take-back.
+    const selectable = (rules.pickup || rules.bombPenalty) && state.phase === 'playing' && state.turn === view.meId;
     const dice = state.table.dice.map(d => dieHtml(d, { selectable, selected: view.tableSelection === d.id }));
     return `<div class="dice-row">${dice.join('')}</div>
         <p class="table-desc"><strong>${describePlay(play)}</strong> by ${nameOf(state, state.table.playerId)}</p>`;
@@ -163,7 +163,7 @@ export function computeControls(state: GameState, view: ViewState): Controls {
     if (!myTurn) return { hint: `Waiting for ${nameOf(state, state.turn)}…`, ...none };
 
     const tablePlay = state.table ? rules.classifyPlay(state.table.dice)! : null;
-    if (view.tableSelection && selected.length === 0) {
+    if (rules.pickup && view.tableSelection && selected.length === 0) {
         const last = state.table!.dice.length === 1;
         const hint = !pickupOk ? 'Taking that die would break the play: pick up an end die.'
             : last ? 'Pick up and reroll the last die: it goes behind your screen, the table clears, and the next player leads.'
@@ -193,7 +193,17 @@ export function computeControls(state: GameState, view: ViewState): Controls {
         if (!canPlay && play.kind !== 'bomb' && rules.colorRequired(tablePlay) && !play.color) {
             hint += ' A one-color play must be beaten by a one-color play.';
         }
-        if (canPlay && play.kind === 'bomb') hint += ' It clears the table and you take nothing back.';
+        const goingOut = selected.length === hand.length;
+        if (canPlay && play.kind === 'bomb' && rules.bombPenalty && !goingOut) {
+            const tableDice = state.table!.dice;
+            const chosen = tableDice.length === 1 || tableDice.some(d => d.id === view.tableSelection);
+            hint += chosen
+                ? ' It clears the table, and you take back the chosen die, rerolled.'
+                : ' A bomb costs a die: click one of the table dice to take back (rerolled).';
+            canPlay = chosen;
+        } else if (canPlay && play.kind === 'bomb') {
+            hint += ' It clears the table and you take nothing back.';
+        }
     }
     if (canPlay && selected.length === hand.length) hint += ' Those are your last dice — you go out!';
     if (tablePlay && selected.length > allowance) hint += ` (Passing rerolls at most ${allowance}.)`;

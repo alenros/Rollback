@@ -25,6 +25,11 @@ export interface Ruleset {
     maxPlayers: number;
     /** May a player take one die from the table instead of beating or passing? */
     pickup: boolean;
+    /**
+     * Does a bomb cost the bomber? If so they take back one of the bombed dice
+     * (their choice), rerolled, unless the bomb took them out.
+     */
+    bombPenalty: boolean;
     classifyPlay(dice: readonly Die[]): Play | null;
     beats(challenger: Play, table: Play): boolean;
     /** For hints: must a play beating `table` be all one color? */
@@ -61,6 +66,7 @@ const classic: Ruleset = {
     minPlayers: 2,
     maxPlayers: 5,
     pickup: false,
+    bombPenalty: false,
 
     classifyPlay(dice) {
         if (dice.length === 0) return null;
@@ -105,6 +111,7 @@ const colorsRules: Ruleset = {
     minPlayers: 2,
     maxPlayers: 5,
     pickup: true,
+    bombPenalty: false,
 
     classifyPlay(dice) {
         if (dice.length === 0) return null;
@@ -141,6 +148,20 @@ const colorsRules: Ruleset = {
 };
 
 // ---------------------------------------------------------------------------
+// Colors: bomb penalty. Identical to Colors, except that a bomb, like an
+// unbeatable trick-ender, costs the bomber one of the bombed dice.
+// ---------------------------------------------------------------------------
+
+const colorsBombPenalty: Ruleset = {
+    ...colorsRules,
+    id: 'colors-bomb-penalty',
+    name: 'Colors: bomb penalty',
+    summary: 'Colors, but a bomb costs you: take back one of the bombed dice, rerolled.',
+    version: '2026-10-02-colors-bomb-penalty',
+    bombPenalty: true,
+};
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -148,6 +169,7 @@ const colorsRules: Ruleset = {
 export const RULESETS = {
     classic,
     colors: colorsRules,
+    'colors-bomb-penalty': colorsBombPenalty,
 } satisfies Record<string, Ruleset>;
 
 export type RulesetId = keyof typeof RULESETS;

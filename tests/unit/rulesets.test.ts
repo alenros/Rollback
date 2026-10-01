@@ -55,3 +55,54 @@ describe('the engine follows the game’s ruleset', () => {
             .toThrow(/no picking up/);
     });
 });
+
+describe('Colors: bomb penalty', () => {
+    // A run bomb red 1-5 against a red table, in a 2-player game.
+    const red = (id: string, value: number) => ({ id, color: 'red' as const, sides: 12 as const, value });
+    function bombState(rulesetId: 'colors' | 'colors-bomb-penalty', tableDice: ReturnType<typeof red>[], extra = true) {
+        const s = startGame(players(2), () => 0, { rulesetId });
+        const [a, b] = s.seating;
+        return {
+            ...s,
+            turn: b,
+            table: { playerId: a, dice: tableDice },
+            hands: { [a]: [red('a9', 9)], [b]: [1, 2, 3, 4, 5].map(v => red(`b${v}`, v)).concat(extra ? [red('b9', 9)] : []) },
+        };
+    }
+    const bomb = (s: ReturnType<typeof bombState>, takeBackId?: string) =>
+        applyAction(s, { type: 'play', playerId: s.turn, dieIds: ['b1', 'b2', 'b3', 'b4', 'b5'], takeBackId }, () => 0);
+
+    it('is Colors plus the penalty', () => {
+        const rules = RULESETS['colors-bomb-penalty'];
+        expect(rules.bombPenalty).toBe(true);
+        expect(RULESETS.colors.bombPenalty).toBe(false);
+        expect(rules.classifyPlay).toBe(RULESETS.colors.classifyPlay);
+        expect(rules.bag).toBe(RULESETS.colors.bag);
+    });
+
+    it('the bomber takes back the chosen bombed die, rerolled; the table clears', () => {
+        const s = bomb(bombState('colors-bomb-penalty', [red('t1', 7), red('t2', 8)]), 't2');
+        expect(s.table).toBeNull();
+        expect(s.turn).toBe(s.seating[1]); // the bomber still leads
+        expect(s.hands[s.seating[1]].map(d => d.id).sort()).toEqual(['b9', 't2']);
+        expect(s.hands[s.seating[1]].find(d => d.id === 't2')!.value).toBe(1);
+        expect(s.rolled[s.seating[1]]).toEqual(['t2']);
+    });
+
+    it('requires a choice when several dice were bombed, and takes the only one otherwise', () => {
+        expect(() => bomb(bombState('colors-bomb-penalty', [red('t1', 7), red('t2', 8)]))).toThrow(/choose one of the table dice/);
+        const s = bomb(bombState('colors-bomb-penalty', [red('t1', 7)]));
+        expect(s.hands[s.seating[1]].map(d => d.id).sort()).toEqual(['b9', 't1']);
+    });
+
+    it('going out with a bomb beats the penalty', () => {
+        const s = bomb(bombState('colors-bomb-penalty', [red('t1', 7), red('t2', 8)], false));
+        expect(s.finished).toContain(s.seating[1]);
+        expect(s.hands[s.seating[1]]).toEqual([]);
+    });
+
+    it('plain Colors bombs still cost nothing', () => {
+        const s = bomb(bombState('colors', [red('t1', 7), red('t2', 8)]), 't2');
+        expect(s.hands[s.seating[1]].map(d => d.id)).toEqual(['b9']);
+    });
+});

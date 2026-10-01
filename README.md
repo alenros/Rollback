@@ -1,6 +1,6 @@
 # Rollback
 
-Online multiplayer version of **Rollback**, a dice climbing game for 2–5 players where beating a play means taking it back. It ships with several **rulesets** the host picks in the lobby: [Colors](Rules.md) and [Classic](Rules.classic.md). Both are also in the app at `/rules`.
+Online multiplayer version of **Rollback**, a dice climbing game for 2–5 players where beating a play means taking it back. It ships with several **rulesets** the host picks in the lobby: [Colors](Rules.md), [Colors: bomb penalty](Rules.colors-bomb-penalty.md) and [Classic](Rules.classic.md). Both are also in the app at `/rules`.
 
 The infrastructure follows [obviously-static](https://github.com/alenros/obviously-static): a static [Astro](https://astro.build) site on GitHub Pages, with a Firebase Realtime Database as the only backend.
 
@@ -50,7 +50,9 @@ A ruleset (`Ruleset` in `rulesets.ts`) bundles everything that can differ betwee
 
 - **`bag`**: a recipe of `{ sides, color, count }` lines. Rulesets can share one (`STANDARD_BAG`, 4 colors × 4 types × 4) or define their own (`CLASSIC_BAG`, 15 of each type, colored by type). Build recipes with `eachColorAndType(count, colors?, sides?)` or list lines by hand.
 - **Numbers**: `handSize`, `rounds`, `minPlayers`, `maxPlayers`. `startGame` refuses a deal the bag can't cover.
-- **Logic**: `classifyPlay`, `beats`, and `colorRequired`, plus `pickup` to turn the pick-up action on or off.
+- **Logic**: `classifyPlay`, `beats`, and `colorRequired`, plus switches: `pickup` turns the pick-up action on or off, and `bombPenalty` makes a bomb cost the bomber one of the bombed dice.
+
+A variant can copy another ruleset and change a few fields: `colors-bomb-penalty` is `{ ...colors, bombPenalty: true }` plus its own id, name and version.
 
 Games store only `rulesetId`. The engine, UI and telemetry look the ruleset up with `rulesOf(state)`. To add a ruleset: define it in `rulesets.ts`, add it to `RULESETS`, and map its rules document in `src/pages/rules/[id].astro`.
 
