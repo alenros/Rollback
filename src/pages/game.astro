@@ -2,43 +2,47 @@
 import Layout from '../components/Layout.astro';
 ---
 
-<Layout title="Rollback - Game" showSmallLogo={true} wide={true}>
-    <div class="screen active game-screen">
-        <header id="game-header" class="game-header"></header>
+<Layout title="Rollback - Game">
+    <div class="game">
+        <header id="game-header" class="game-top"></header>
 
-        <section id="seats" class="seats" aria-label="Players"></section>
-
-        <section class="panel table-area" aria-label="Table">
-            <h3>Table</h3>
-            <div id="table-play"></div>
+        <section class="panel players-panel" aria-label="Players">
+            <h3>Players</h3>
+            <div id="seats" class="seats"></div>
         </section>
 
-        <section id="round-panel" class="panel round-panel" hidden></section>
+        <div class="game-main">
+            <section id="table-panel" class="panel table-panel" aria-label="Table">
+                <h3>On the table</h3>
+                <div id="table-play"></div>
+            </section>
 
-        <section class="panel hand-area" aria-label="Your screen">
-            <div class="hand-header">
-                <h3>Your screen</h3>
-                <div class="sort-toggle" role="group" aria-label="Sort dice">
-                    <button type="button" class="chip" data-sort="color">By color</button>
-                    <button type="button" class="chip" data-sort="value">By value</button>
+            <section id="round-panel" class="panel round-panel" hidden></section>
+
+            <section class="panel hand-panel" aria-label="Your screen">
+                <div class="hand-header">
+                    <h3>Your screen</h3>
+                    <div class="sort-toggle" role="group" aria-label="Sort dice">
+                        <button type="button" class="chip" data-sort="color">By color</button>
+                        <button type="button" class="chip" data-sort="value">By value</button>
+                    </div>
                 </div>
-            </div>
-            <div id="hand"></div>
-            <p id="move-hint" class="hint"></p>
-            <div class="actions">
-                <button id="play-btn" type="button" disabled>Play</button>
-                <button id="pass-btn" type="button" disabled>Pass</button>
-                <button id="pickup-btn" type="button" disabled>Pick up &amp; reroll</button>
-                <button id="clear-btn" type="button" class="secondary">Clear</button>
-            </div>
-        </section>
+                <div id="hand"></div>
+                <p id="move-hint" class="hint"></p>
+                <div class="button-row actions">
+                    <button id="play-btn" type="button" class="primary" disabled>Play</button>
+                    <button id="pass-btn" type="button" disabled>Pass</button>
+                    <button id="pickup-btn" type="button" disabled>Pick up &amp; reroll</button>
+                    <button id="clear-btn" type="button">Clear</button>
+                </div>
+            </section>
+        </div>
 
-        <section class="panel log-area" aria-label="Game log">
+        <section class="panel log-panel" aria-label="Game log">
             <h3>Log</h3>
             <ol id="log" class="log"></ol>
+            <button id="leave-game-btn" type="button">Leave game</button>
         </section>
-
-        <button id="leave-game-btn" type="button" class="secondary">Leave Game</button>
     </div>
 </Layout>
 
@@ -111,6 +115,7 @@ import Layout from '../components/Layout.astro';
             const roundPanel = $('round-panel');
             roundPanel.innerHTML = renderRoundPanel(state, view);
             roundPanel.hidden = state.phase === 'playing';
+            $('table-panel').hidden = state.phase !== 'playing';
 
             const controls = computeControls(state, view);
             $('move-hint').innerHTML = controls.hint;

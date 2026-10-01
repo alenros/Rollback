@@ -6,8 +6,8 @@ export interface Props {
 const { codeId = "display-room-code" } = Astro.props;
 ---
 
-<div class="room-code">
-    <h3>Room Code</h3>
+<section class="panel ticket" aria-label="Room code">
+    <span class="label">Room code</span>
     <div class="code" id={codeId}></div>
-    <p>Share this code with other players (2–5 players)</p>
-</div>
+    <p class="hint">Share it with 1–4 friends.</p>
+</section>

@@ -5,25 +5,29 @@ import Die from '../components/Die.astro';
 const baseUrl = import.meta.env.BASE_URL;
 ---
 
-<Layout title="Rollback - Home">
-    <div id="home-screen" class="screen active">
-        <h1 class="title">Rollback</h1>
-        <p class="tagline">A dice climbing game where beating a play means taking it back.</p>
-        <div class="hero-dice">
+<Layout title="Rollback - Home" cover={true}>
+    <section id="home-screen" class="cover">
+        <h1 class="cover-title">Rollback</h1>
+        <p class="cover-tagline">A dice climbing game where beating a play means taking it back.</p>
+        <div class="cover-dice" aria-hidden="true">
             <Die color="red" sides={4} value={3} />
-            <Die color="red" sides={6} value={4} />
-            <Die color="red" sides={8} value={5} />
-            <Die color="red" sides={12} value={6} />
+            <Die color="blue" sides={6} value={4} />
+            <Die color="green" sides={8} value={5} />
+            <Die color="yellow" sides={12} value={6} />
         </div>
-        <div class="input-group">
-            <label for="player-name">Your Name</label>
-            <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+        <div class="panel cover-panel">
+            <div class="field">
+                <label for="player-name">Your name</label>
+                <input type="text" id="player-name" placeholder="Ann" maxlength="20">
+            </div>
+            <div class="button-row">
+                <button id="create-room-btn" class="primary">Create room</button>
+                <button id="join-room-btn">Join room</button>
+                <button id="rejoin-btn" hidden></button>
+            </div>
+            <p class="hint"><a href={`${baseUrl}rules`}>How to play</a> · 2–5 players · about 10 minutes a round</p>
         </div>
-        <button id="create-room-btn">Create Room</button>
-        <button id="join-room-btn">Join Room</button>
-        <button id="rejoin-btn" class="secondary" hidden></button>
-        <p><a href={`${baseUrl}rules`}>How to play</a></p>
-    </div>
+    </section>
 </Layout>
 
 <script>

@@ -2,16 +2,18 @@
 import Layout from '../components/Layout.astro';
 ---
 
-<Layout title="Rollback - Join Room" showSmallLogo={true}>
-    <div class="screen active">
-        <h2>Join a Room</h2>
-        <div class="input-group">
-            <label for="join-code">Room Code</label>
-            <input type="text" id="join-code" placeholder="Enter 6-character code" maxlength="6" autocomplete="off">
+<Layout title="Rollback - Join Room">
+    <section class="panel narrow">
+        <h2>Join a room</h2>
+        <div class="field">
+            <label for="join-code">Room code</label>
+            <input type="text" id="join-code" class="code-input" placeholder="ABC123" maxlength="6" autocomplete="off">
         </div>
-        <button id="join-room-btn">Join Room</button>
-        <button id="back-btn">Back</button>
-    </div>
+        <div class="button-row">
+            <button id="join-room-btn" class="primary">Join room</button>
+            <button id="back-btn">Back</button>
+        </div>
+    </section>
 </Layout>
 
 <script>

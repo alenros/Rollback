@@ -21,9 +21,9 @@ const Doc = DOCS[id];
 const baseUrl = import.meta.env.BASE_URL;
 ---
 
-<Layout title={`Rollback - ${RULESETS[id].name} rules`} showSmallLogo={true} wide={true}>
+<Layout title={`Rollback - ${RULESETS[id].name} rules`}>
+    <a slot="header" class="tag" href={`${baseUrl}rules`} style="text-decoration: none">← All rulesets</a>
     <article class="rules">
-        <p><a href={`${baseUrl}rules`}>← All rulesets</a></p>
         <Doc />
     </article>
 </Layout>

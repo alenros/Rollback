@@ -6,8 +6,9 @@ const baseUrl = import.meta.env.BASE_URL;
 const rulesets = rulesetList();
 ---
 
-<Layout title="Rollback - Rules" showSmallLogo={true}>
-    <div class="screen active rules-index">
+<Layout title="Rollback - Rules">
+    <span slot="header" class="tag">Rulebook</span>
+    <div class="rules-index">
         <h2>How to play</h2>
         <p class="hint">The host picks the rules in the lobby.</p>
         {rulesets.map(r => (

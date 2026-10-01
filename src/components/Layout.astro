@@ -1,13 +1,16 @@
 ---
+import '@fontsource/bowlby-one/400.css';
+import '@fontsource/fraunces/400.css';
+import '@fontsource/fraunces/600.css';
 import '../styles/styles.css';
 
 export interface Props {
     title?: string;
-    showSmallLogo?: boolean;
-    wide?: boolean;
+    /** The home page is the box cover: its own big title, no header strip. */
+    cover?: boolean;
 }
 
-const { title = "Rollback - Dice Climbing Game", showSmallLogo = false, wide = false } = Astro.props;
+const { title = "Rollback - Dice Climbing Game", cover = false } = Astro.props;
 const baseUrl = import.meta.env.BASE_URL;
 ---
 
@@ -20,11 +23,16 @@ const baseUrl = import.meta.env.BASE_URL;
     <title>{title}</title>
 </head>
 <body>
-    <div class:list={['container', { wide }]}>
-        {showSmallLogo && (
-            <a class="logo-thumbnail" href={baseUrl} aria-label="Rollback home">Rollback</a>
+    <div class="shell">
+        {!cover && (
+            <header class="topbar">
+                <a class="wordmark" href={baseUrl}>Rollback</a>
+                <div class="topbar-slot"><slot name="header" /></div>
+            </header>
         )}
-        <slot />
+        <main>
+            <slot />
+        </main>
         <div id="message-area" role="status" aria-live="polite"></div>
     </div>
 </body>

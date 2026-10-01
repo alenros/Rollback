@@ -7,21 +7,27 @@ import { rulesetList } from '../lib/rulesets';
 const rulesets = rulesetList();
 ---
 
-<Layout title="Rollback - Lobby" showSmallLogo={true}>
-    <div class="screen active">
-        <h2>Waiting Room</h2>
-        <RoomCode />
-        <PlayerList containerId="players-container" title="Players" />
-        <div class="input-group ruleset-picker">
-            <label for="ruleset-select">Rules</label>
-            <select id="ruleset-select" disabled>
-                {rulesets.map(r => <option value={r.id}>{r.name}</option>)}
-            </select>
-            <p id="ruleset-summary" class="hint"></p>
+<Layout title="Rollback - Lobby">
+    <span slot="header" class="tag">Waiting room</span>
+    <div class="lobby">
+        <div class="lobby-col">
+            <RoomCode />
+            <PlayerList containerId="players-container" title="Players" />
         </div>
-        <p id="lobby-hint" class="hint"></p>
-        <button id="start-game-btn" style="display: none;">Start Game</button>
-        <button id="leave-room-btn">Leave Room</button>
+        <div class="lobby-col">
+            <section class="panel ruleset-picker">
+                <h3><label for="ruleset-select">Rules</label></h3>
+                <select id="ruleset-select" disabled>
+                    {rulesets.map(r => <option value={r.id}>{r.name}</option>)}
+                </select>
+                <p id="ruleset-summary" class="hint"></p>
+                <p id="lobby-hint" class="hint"></p>
+                <div class="button-row">
+                    <button id="start-game-btn" class="primary" style="display: none;">Start game</button>
+                    <button id="leave-room-btn">Leave room</button>
+                </div>
+            </section>
+        </div>
     </div>
 </Layout>
 
