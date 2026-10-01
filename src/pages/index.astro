@@ -1,0 +1,82 @@
+---
+import Layout from '../components/Layout.astro';
+import Die from '../components/Die.astro';
+
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<Layout title="Rollback - Home">
+    <div id="home-screen" class="screen active">
+        <h1 class="title">Rollback</h1>
+        <p class="tagline">A dice climbing game where beating a play means taking it back.</p>
+        <div class="hero-dice">
+            <Die sides={4} value={4} />
+            <Die sides={6} value={4} />
+            <Die sides={8} value={4} />
+            <Die sides={12} value={4} />
+        </div>
+        <div class="input-group">
+            <label for="player-name">Your Name</label>
+            <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+        </div>
+        <button id="create-room-btn">Create Room</button>
+        <button id="join-room-btn">Join Room</button>
+        <button id="rejoin-btn" class="secondary" hidden></button>
+        <p><a href={`${baseUrl}rules`}>How to play</a></p>
+    </div>
+</Layout>
+
+<script>
+    import { getCurrentPlayer, getSavedName, saveName, saveSession } from '../lib/session';
+
+    const BASE_URL = import.meta.env.BASE_URL;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const playerNameInput = document.getElementById('player-name') as HTMLInputElement;
+        const createRoomBtn = document.getElementById('create-room-btn') as HTMLButtonElement;
+        const joinRoomBtn = document.getElementById('join-room-btn') as HTMLButtonElement;
+
+        playerNameInput.value = getSavedName();
+
+        // Offer a way back into a room this browser is still seated in.
+        const savedRoom = localStorage.getItem('currentRoom');
+        const rejoinBtn = document.getElementById('rejoin-btn') as HTMLButtonElement;
+        if (savedRoom && getCurrentPlayer()) {
+            rejoinBtn.textContent = `Rejoin room ${savedRoom}`;
+            rejoinBtn.hidden = false;
+            rejoinBtn.addEventListener('click', () => {
+                window.location.href = `${BASE_URL}lobby?code=${savedRoom}`;
+            });
+        }
+
+        const readName = (): string | null => {
+            const name = playerNameInput.value.trim();
+            if (!name) {
+                alert('Please enter your name');
+                return null;
+            }
+            saveName(name);
+            return name;
+        };
+
+        createRoomBtn.addEventListener('click', async () => {
+            const name = readName();
+            if (!name) return;
+            createRoomBtn.disabled = true;
+            try {
+                const { createRoom } = await import('../lib/room-actions');
+                const { roomCode, player } = await createRoom(name);
+                saveSession(roomCode, player);
+                window.location.href = `${BASE_URL}lobby?code=${roomCode}`;
+            } catch (error) {
+                console.error('Error creating room:', error);
+                alert('Failed to create room');
+                createRoomBtn.disabled = false;
+            }
+        });
+
+        joinRoomBtn.addEventListener('click', () => {
+            if (readName()) window.location.href = `${BASE_URL}join`;
+        });
+    });
+</script>

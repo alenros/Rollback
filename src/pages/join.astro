@@ -1,0 +1,64 @@
+---
+import Layout from '../components/Layout.astro';
+---
+
+<Layout title="Rollback - Join Room" showSmallLogo={true}>
+    <div class="screen active">
+        <h2>Join a Room</h2>
+        <div class="input-group">
+            <label for="join-code">Room Code</label>
+            <input type="text" id="join-code" placeholder="Enter 6-character code" maxlength="6" autocomplete="off">
+        </div>
+        <button id="join-room-btn">Join Room</button>
+        <button id="back-btn">Back</button>
+    </div>
+</Layout>
+
+<script>
+    import { GameError } from '../lib/game';
+    import { getSavedName, saveSession } from '../lib/session';
+
+    const BASE_URL = import.meta.env.BASE_URL;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const joinCodeInput = document.getElementById('join-code') as HTMLInputElement;
+        const joinRoomBtn = document.getElementById('join-room-btn') as HTMLButtonElement;
+
+        joinRoomBtn.addEventListener('click', async () => {
+            const playerName = getSavedName();
+            const roomCode = joinCodeInput.value.trim().toUpperCase();
+
+            if (!playerName) {
+                alert('Player name not found. Please go back to home.');
+                window.location.href = BASE_URL;
+                return;
+            }
+            if (roomCode.length !== 6) {
+                alert('Room code must be 6 characters');
+                return;
+            }
+
+            joinRoomBtn.disabled = true;
+            try {
+                const { joinRoom } = await import('../lib/room-actions');
+                const player = await joinRoom(roomCode, playerName);
+                saveSession(roomCode, player);
+                window.location.href = `${BASE_URL}lobby?code=${roomCode}`;
+            } catch (error) {
+                console.error('Error joining room:', error);
+                alert(error instanceof GameError ? error.message : 'Failed to join room');
+                joinRoomBtn.disabled = false;
+            }
+        });
+
+        joinCodeInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') joinRoomBtn.click();
+        });
+
+        document.getElementById('back-btn')?.addEventListener('click', () => {
+            window.location.href = BASE_URL;
+        });
+
+        joinCodeInput.focus();
+    });
+</script>

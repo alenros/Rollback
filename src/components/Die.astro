@@ -1,0 +1,13 @@
+---
+// Static die for server-rendered pages; shares its markup with the game UI.
+import type { Sides } from '../lib/dice';
+import { dieHtml } from '../lib/game-ui';
+
+export interface Props {
+    sides: Sides;
+    value: number;
+}
+const { sides, value } = Astro.props;
+---
+
+<Fragment set:html={dieHtml({ id: `static-d${sides}`, sides, value })} />

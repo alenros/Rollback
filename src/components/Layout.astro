@@ -1,0 +1,31 @@
+---
+import '../styles/styles.css';
+
+export interface Props {
+    title?: string;
+    showSmallLogo?: boolean;
+    wide?: boolean;
+}
+
+const { title = "Rollback - Dice Climbing Game", showSmallLogo = false, wide = false } = Astro.props;
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href={`${baseUrl}favicon.svg`} />
+    <title>{title}</title>
+</head>
+<body>
+    <div class:list={['container', { wide }]}>
+        {showSmallLogo && (
+            <a class="logo-thumbnail" href={baseUrl} aria-label="Rollback home">Rollback</a>
+        )}
+        <slot />
+        <div id="message-area" role="status" aria-live="polite"></div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,214 @@
+---
+import Layout from '../components/Layout.astro';
+---
+
+<Layout title="Rollback - Game" showSmallLogo={true} wide={true}>
+    <div class="screen active game-screen">
+        <header id="game-header" class="game-header"></header>
+
+        <section id="seats" class="seats" aria-label="Players"></section>
+
+        <section class="panel table-area" aria-label="Table">
+            <h3>Table</h3>
+            <div id="table-play"></div>
+        </section>
+
+        <section id="round-panel" class="panel round-panel" hidden></section>
+
+        <section class="panel hand-area" aria-label="Your screen">
+            <div class="hand-header">
+                <h3>Your screen</h3>
+                <div class="sort-toggle" role="group" aria-label="Sort dice">
+                    <button type="button" class="chip" data-sort="type">By type</button>
+                    <button type="button" class="chip" data-sort="value">By value</button>
+                </div>
+            </div>
+            <div id="hand"></div>
+            <p id="move-hint" class="hint"></p>
+            <div class="actions">
+                <button id="play-btn" type="button" disabled>Play</button>
+                <button id="pass-btn" type="button" disabled>Pass</button>
+                <button id="clear-btn" type="button" class="secondary">Clear</button>
+            </div>
+        </section>
+
+        <section class="panel log-area" aria-label="Game log">
+            <h3>Log</h3>
+            <ol id="log" class="log"></ol>
+        </section>
+
+        <button id="leave-game-btn" type="button" class="secondary">Leave Game</button>
+    </div>
+</Layout>
+
+<script>
+    import { GameError, type GameState } from '../lib/game';
+    import {
+        ROLL_ANIMATION_MS, computeControls, renderHand, renderHeader, renderLog, renderRoundPanel, renderSeats, renderTable,
+        type SortMode, type ViewState,
+    } from '../lib/game-ui';
+    import { clearSession, getCurrentPlayer, getRoomCodeFromUrl } from '../lib/session';
+
+    const BASE_URL = import.meta.env.BASE_URL;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const roomCode = getRoomCodeFromUrl();
+        const currentPlayer = getCurrentPlayer();
+        if (!roomCode || !currentPlayer) {
+            alert(!roomCode ? 'No room code provided' : 'No player data found');
+            window.location.href = BASE_URL;
+            return;
+        }
+
+        const { watchRoom, sendAction, beginNextRound } = await import('../lib/room-actions');
+
+        const $ = (id: string) => document.getElementById(id) as HTMLElement;
+        const playBtn = $('play-btn') as HTMLButtonElement;
+        const passBtn = $('pass-btn') as HTMLButtonElement;
+        const message = $('message-area');
+
+        let state: GameState | null = null;
+        let busy = false;
+        let lastRollKey: string | null = null;
+        let rolledIds = new Set<string>();
+        let rollStartedAt = 0;
+        const view: ViewState = {
+            meId: currentPlayer.id,
+            isHost: false,
+            selection: new Set(),
+            fresh: new Set(),
+            animate: new Set(),
+            animateElapsedMs: 0,
+            sortBy: localStorage.getItem('rollbackSort') === 'value' ? 'value' : 'type',
+        };
+
+        function flash(text: string) {
+            message.textContent = text;
+            message.classList.toggle('visible', !!text);
+        }
+
+        function render() {
+            if (!state) return;
+            // Drop selections for dice that are no longer behind my screen.
+            const myIds = new Set((state.hands[view.meId] ?? []).map(d => d.id));
+            view.selection.forEach(id => { if (!myIds.has(id)) view.selection.delete(id); });
+
+            const elapsed = performance.now() - rollStartedAt;
+            view.animate = elapsed < ROLL_ANIMATION_MS ? rolledIds : new Set();
+            view.animateElapsedMs = elapsed;
+
+            $('game-header').innerHTML = renderHeader(state);
+            $('seats').innerHTML = renderSeats(state, view);
+            $('table-play').innerHTML = renderTable(state);
+            $('hand').innerHTML = renderHand(state, view);
+            $('log').innerHTML = renderLog(state);
+
+            const roundPanel = $('round-panel');
+            roundPanel.innerHTML = renderRoundPanel(state, view);
+            roundPanel.hidden = state.phase === 'playing';
+
+            const controls = computeControls(state, view);
+            $('move-hint').innerHTML = controls.hint;
+            playBtn.disabled = busy || !controls.canPlay;
+            passBtn.disabled = busy || !controls.canPass;
+            passBtn.textContent = controls.passLabel;
+
+            document.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.sort === view.sortBy);
+            });
+            document.body.classList.toggle('my-turn', state.phase === 'playing' && state.turn === view.meId);
+        }
+
+        async function run(task: () => Promise<void>) {
+            if (busy) return;
+            busy = true;
+            flash('');
+            render();
+            try {
+                await task();
+                view.selection.clear();
+            } catch (error) {
+                console.error(error);
+                flash(error instanceof GameError ? error.message : 'Something went wrong — try again.');
+            } finally {
+                busy = false;
+                render();
+            }
+        }
+
+        watchRoom(roomCode, room => {
+            if (!room) {
+                alert('Room no longer exists');
+                clearSession();
+                window.location.href = BASE_URL;
+                return;
+            }
+            if (!room.game) return; // waiting for the host's start transaction
+            if (!room.game.seating.includes(view.meId)) {
+                alert('You are not seated in this game');
+                window.location.href = BASE_URL;
+                return;
+            }
+            view.isHost = room.hostId === view.meId;
+            state = room.game;
+
+            // Highlight the dice I just picked up or rerolled; animate them only on the
+            // snapshot where they changed, not on every re-render.
+            const hand = state.hands[view.meId] ?? [];
+            const freshIds = state.rolled[view.meId] ?? [];
+            const rollKey = freshIds.map(id => `${id}:${hand.find(d => d.id === id)?.value}`).join(',');
+            view.fresh = new Set(freshIds);
+            if (lastRollKey !== null && rollKey !== lastRollKey) {
+                rolledIds = new Set(freshIds);
+                rollStartedAt = performance.now();
+            }
+            lastRollKey = rollKey;
+            render();
+        });
+
+        $('hand').addEventListener('click', e => {
+            const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-die-id]');
+            if (!btn) return;
+            const id = btn.dataset.dieId!;
+            if (view.selection.has(id)) view.selection.delete(id);
+            else view.selection.add(id);
+            render();
+        });
+
+        document.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                view.sortBy = btn.dataset.sort as SortMode;
+                localStorage.setItem('rollbackSort', view.sortBy);
+                render();
+            });
+        });
+
+        playBtn.addEventListener('click', () => run(() =>
+            sendAction(roomCode, { type: 'play', playerId: view.meId, dieIds: [...view.selection] })));
+
+        passBtn.addEventListener('click', () => run(() =>
+            sendAction(roomCode, { type: 'pass', playerId: view.meId, rerollIds: [...view.selection] })));
+
+        $('clear-btn').addEventListener('click', () => {
+            view.selection.clear();
+            render();
+        });
+
+        $('round-panel').addEventListener('click', e => {
+            const target = e.target as HTMLElement;
+            if (target.id === 'next-round-btn') run(() => beginNextRound(roomCode));
+            if (target.id === 'home-btn') {
+                clearSession();
+                window.location.href = BASE_URL;
+            }
+        });
+
+        $('leave-game-btn').addEventListener('click', () => {
+            if (state?.phase !== 'gameOver' &&
+                !confirm('Leave the game? The others cannot continue without you, but you can rejoin from this browser.')) {
+                return;
+            }
+            window.location.href = BASE_URL;
+        });
+    });
+</script>

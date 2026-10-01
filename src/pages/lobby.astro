@@ -1,0 +1,100 @@
+---
+import Layout from '../components/Layout.astro';
+import RoomCode from '../components/RoomCode.astro';
+import PlayerList from '../components/PlayerList.astro';
+---
+
+<Layout title="Rollback - Lobby" showSmallLogo={true}>
+    <div class="screen active">
+        <h2>Waiting Room</h2>
+        <RoomCode />
+        <PlayerList containerId="players-container" title="Players" />
+        <p id="lobby-hint" class="hint"></p>
+        <button id="start-game-btn" style="display: none;">Start Game</button>
+        <button id="leave-room-btn">Leave Room</button>
+    </div>
+</Layout>
+
+<script>
+    import { GameError, MAX_PLAYERS, MIN_PLAYERS } from '../lib/game';
+    import { GameStatus } from '../lib/game-status';
+    import { playersInOrder } from '../lib/room';
+    import { clearSession, escapeHtml, getCurrentPlayer, getRoomCodeFromUrl } from '../lib/session';
+
+    const BASE_URL = import.meta.env.BASE_URL;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const roomCode = getRoomCodeFromUrl();
+        const currentPlayer = getCurrentPlayer();
+        if (!roomCode || !currentPlayer) {
+            alert(!roomCode ? 'No room code provided' : 'No player data found');
+            window.location.href = BASE_URL;
+            return;
+        }
+
+        const roomCodeDisplay = document.getElementById('display-room-code');
+        if (roomCodeDisplay) roomCodeDisplay.textContent = roomCode;
+
+        const { watchRoom, startRoomGame, leaveRoom } = await import('../lib/room-actions');
+        const startBtn = document.getElementById('start-game-btn') as HTMLButtonElement;
+        const hint = document.getElementById('lobby-hint') as HTMLElement;
+
+        const unwatch = watchRoom(roomCode, room => {
+            if (!room) {
+                alert('Room no longer exists');
+                window.location.href = BASE_URL;
+                return;
+            }
+            if (!room.players?.[currentPlayer.id]) {
+                alert('You are no longer in this room');
+                clearSession();
+                window.location.href = BASE_URL;
+                return;
+            }
+            if (room.status !== GameStatus.WAITING) {
+                window.location.href = `${BASE_URL}game?code=${roomCode}`;
+                return;
+            }
+
+            const players = playersInOrder(room);
+            const container = document.getElementById('players-container');
+            if (container) {
+                container.innerHTML = players.map(p => `
+                    <div class="player">
+                        <span class="player-name">${escapeHtml(p.name)}${p.id === currentPlayer.id ? ' (you)' : ''}</span>
+                        ${p.isHost ? '<span class="player-status">Host</span>' : ''}
+                    </div>`).join('');
+            }
+
+            const isHost = room.hostId === currentPlayer.id;
+            const enough = players.length >= MIN_PLAYERS;
+            startBtn.style.display = isHost && enough ? 'inline-block' : 'none';
+            hint.textContent = !enough
+                ? `Waiting for players… ${players.length}/${MIN_PLAYERS} needed (max ${MAX_PLAYERS}).`
+                : isHost ? 'Ready when you are. Seating follows join order.' : 'Waiting for the host to start.';
+        });
+
+        startBtn.addEventListener('click', async () => {
+            startBtn.disabled = true;
+            try {
+                await startRoomGame(roomCode, currentPlayer.id);
+            } catch (error) {
+                console.error('Error starting game:', error);
+                alert(error instanceof GameError ? error.message : 'Failed to start game');
+                startBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('leave-room-btn')?.addEventListener('click', async () => {
+            try {
+                unwatch();
+                await leaveRoom(roomCode, currentPlayer.id);
+                clearSession();
+                window.location.href = BASE_URL;
+            } catch (error) {
+                console.error('Error leaving room:', error);
+                alert('Failed to leave room');
+            }
+        });
+    });
+</script>
