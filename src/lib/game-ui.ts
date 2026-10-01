@@ -2,7 +2,7 @@
  * HTML rendering for the game page. Pure string builders over GameState so the
  * page script only has to re-render on each Firebase snapshot and wire clicks.
  */
-import { COLORS, type Die, type Sides } from './dice';
+import { COLORS, type Color, type Die, type Sides } from './dice';
 import { canPickUp, canReplace, ordinal, placePoints, rerollAllowance, rulesOf, standings, type GameState } from './game';
 import { describePlay } from './plays';
 import { classifyTable } from './rulesets';
@@ -30,16 +30,102 @@ export const ROLL_ANIMATION_MS = 700;
 
 const nameOf = (state: GameState, id: string) => escapeHtml(state.names[id] ?? '?');
 
-/**
- * Silhouettes of the polyhedral dice (viewBox 0 0 100 100), with the value centered
- * in each shape's visual middle. Shape shows the type; fill shows the color.
- */
-const SHAPES: Record<Sides, { outline: string; valueY: number }> = {
-    4: { outline: '<polygon points="50,4 97,93 3,93"/>', valueY: 66 },
-    6: { outline: '<rect x="7" y="7" width="86" height="86" rx="10"/>', valueY: 52 },
-    8: { outline: '<polygon points="50,2 96,44 50,98 4,44"/>', valueY: 48 },
-    12: { outline: '<polygon points="50,3 97,37 79,93 21,93 3,37"/>', valueY: 56 },
+export type Point = readonly [number, number];
+
+/** Each color's dice wear a card suit as their pips (the color still drives the rules). */
+export const SUIT_OF: Record<Color, Suit> = { red: 'hearts', blue: 'diamonds', green: 'clubs', yellow: 'spades' };
+type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
+
+/** Suit glyphs drawn in a 20×20 box centered on the origin. */
+const SUITS: Record<Suit, string> = {
+    hearts: '<path d="M0,9 C-4,5.5 -10,1.5 -10,-3.5 C-10,-7.5 -7.5,-10 -5,-10 C-2.5,-10 -1,-8.5 0,-6.5 C1,-8.5 2.5,-10 5,-10 C7.5,-10 10,-7.5 10,-3.5 C10,1.5 4,5.5 0,9 Z"/>',
+    diamonds: '<path d="M0,-10 L7.5,0 L0,10 L-7.5,0 Z"/>',
+    spades: '<path d="M0,-10 C4,-5.5 10,-1.5 10,3 C10,6.5 7.5,8.5 5,8.5 C3,8.5 1.6,7.6 0.9,6.3 C1.2,8.2 2.2,9.4 4,10 L-4,10 C-2.2,9.4 -1.2,8.2 -0.9,6.3 C-1.6,7.6 -3,8.5 -5,8.5 C-7.5,8.5 -10,6.5 -10,3 C-10,-1.5 -4,-5.5 0,-10 Z"/>',
+    clubs: '<circle cx="0" cy="-5" r="4.6"/><circle cx="-5.2" cy="2" r="4.6"/><circle cx="5.2" cy="2" r="4.6"/><circle cx="0" cy="0.5" r="2.5"/>'
+        + '<path d="M-1,1 L1,1 L1.4,6.5 C1.8,8.6 2.8,9.5 4,10 L-4,10 C-2.8,9.5 -1.8,8.6 -1.4,6.5 Z"/>',
 };
+
+/**
+ * Smallest pip worth drawing (viewBox units). A face whose pips would come out smaller
+ * shows a numeral over a suit index instead, like a card corner; each shape's `max` follows.
+ */
+export const MIN_PIP_SIZE = 13;
+
+// Classic die faces on a 3×3 grid, (0,0) top left to (1,1) bottom right. 7–9 extend the six.
+const LEFT: Point[] = [[0, 0], [0, 0.5], [0, 1]];
+const RIGHT: Point[] = [[1, 0], [1, 0.5], [1, 1]];
+const GRID: Record<number, Point[]> = {
+    1: [[0.5, 0.5]],
+    2: [[0, 0], [1, 1]],
+    3: [[0, 0], [0.5, 0.5], [1, 1]],
+    4: [[0, 0], [1, 0], [0, 1], [1, 1]],
+    5: [[0, 0], [1, 0], [0.5, 0.5], [0, 1], [1, 1]],
+    6: [...LEFT, ...RIGHT],
+    7: [...LEFT, ...RIGHT, [0.5, 0.5]],
+    8: [...LEFT, ...RIGHT, [0.5, 0], [0.5, 1]],
+    9: [...LEFT, ...RIGHT, [0.5, 0], [0.5, 0.5], [0.5, 1]],
+};
+// A triangle has no room for a square grid, so the d4 racks its pips like pins (offsets from the center, ±1).
+const RACK: Record<number, Point[]> = {
+    1: [[0, 0]],
+    2: [[0, -0.55], [0, 0.55]],
+    3: [[0, -0.7], [-0.8, 0.55], [0.8, 0.55]],
+    4: [[0, -0.9], [-0.9, 0.6], [0.9, 0.6], [0, 0.1]],
+};
+
+/**
+ * How pips spread over a face: around (50, cy), `spread` units from the center to the
+ * outer pips, for values up to `max`. The d8 turns its grid 45° to follow the diamond
+ * (the glyphs stay upright). Sizes are the largest that keep every pip clear of the
+ * outline (see game-ui tests); higher values put a numeral at `valueY` over a suit at `indexY`.
+ */
+interface PipFrame {
+    cy: number; spread: number; size: number; max: number;
+    layout: 'grid' | 'diamond' | 'rack';
+    valueY?: number; indexY?: number;
+}
+
+/**
+ * Silhouettes of the polyhedral dice (viewBox 0 0 100 100). `hull` is the outline's
+ * corners, used to keep pips off the edge. Shape shows the type; fill shows the color.
+ */
+export const SHAPES: Record<Sides, { outline: string; hull: Point[]; pips: PipFrame }> = {
+    4: { outline: '<polygon points="50,4 97,93 3,93"/>', hull: [[50, 4], [97, 93], [3, 93]],
+        pips: { cy: 63.5, spread: 17, size: 14, max: 4, layout: 'rack' } },
+    6: { outline: '<rect x="7" y="7" width="86" height="86" rx="10"/>', hull: [[7, 7], [93, 7], [93, 93], [7, 93]],
+        pips: { cy: 50, spread: 21.5, size: 18.5, max: 6, layout: 'grid' } },
+    8: { outline: '<polygon points="50,2 96,44 50,98 4,44"/>', hull: [[50, 2], [96, 44], [50, 98], [4, 44]],
+        pips: { cy: 47, spread: 12.5, size: 14.5, max: 5, layout: 'diamond', valueY: 42, indexY: 68 } },
+    12: { outline: '<polygon points="50,3 97,37 79,93 21,93 3,37"/>', hull: [[50, 3], [97, 37], [79, 93], [21, 93], [3, 37]],
+        pips: { cy: 54.5, spread: 16.5, size: 13, max: 9, layout: 'grid', valueY: 47, indexY: 74 } },
+};
+
+/** Centers of the pips for `value` on a die with this many sides (empty above its `max`). */
+export function pipCenters(sides: Sides, value: number): Point[] {
+    const { cy, spread, layout, max } = SHAPES[sides].pips;
+    if (value > max) return [];
+    if (layout === 'rack') return (RACK[value] ?? []).map(([u, v]) => [50 + u * spread, cy + v * spread]);
+    return (GRID[value] ?? []).map(([u, v]) => {
+        const x = (u - 0.5) * 2 * spread, y = (v - 0.5) * 2 * spread;
+        return layout === 'diamond'
+            ? [50 + (x - y) * Math.SQRT1_2, cy + (x + y) * Math.SQRT1_2]
+            : [50 + x, cy + y];
+    });
+}
+
+export const INDEX_SIZE = 14;
+
+const glyph = (suit: Suit, [x, y]: Point, size: number, cls: string) =>
+    `<g class="${cls}" transform="translate(${+x.toFixed(1)} ${+y.toFixed(1)}) scale(${size / 20})">${SUITS[suit]}</g>`;
+
+function faceHtml(die: Die): string {
+    const suit = SUIT_OF[die.color];
+    const { size, max, valueY, indexY } = SHAPES[die.sides].pips;
+    if (die.value > max) {
+        return `<text class="die-value" x="50" y="${valueY}">${die.value}</text>${glyph(suit, [50, indexY!], INDEX_SIZE, 'die-index')}`;
+    }
+    return pipCenters(die.sides, die.value).map(p => glyph(suit, p, size, 'pip')).join('');
+}
 
 export interface DieOptions {
     selectable?: boolean;
@@ -55,9 +141,9 @@ export function dieHtml(die: Die, opts: DieOptions = {}): string {
     const inner = `<svg class="die-shape" viewBox="-4 -4 112 112" aria-hidden="true">`
         + `<g class="die-shadow" transform="translate(6 6)">${shape.outline}</g>`
         + `<g class="die-outline">${shape.outline}</g>`
-        + `<text class="die-value" x="50" y="${shape.valueY}">${die.value}</text></svg>`
+        + `<g class="die-face">${faceHtml(die)}</g></svg>`
         + (opts.fresh ? '<span class="die-new" aria-hidden="true">new</span>' : '');
-    const cls = ['die', `die-${die.color}`, `die-d${die.sides}`];
+    const cls = ['die', `die-${die.color}`, `die-suit-${SUIT_OF[die.color]}`, `die-d${die.sides}`];
     if (opts.selected) cls.push('selected');
     if (opts.fresh) cls.push('fresh');
     if (opts.animate) cls.push('rolling');

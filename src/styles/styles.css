@@ -183,8 +183,8 @@ select:disabled { background: var(--wash); color: var(--ink); opacity: 1; }
 .die-shadow > * { fill: var(--ink); }
 .die-outline > * { fill: var(--die-color); stroke: var(--ink); stroke-width: 6; stroke-linejoin: round; }
 .die-shape text { fill: var(--die-text); font-family: var(--display); text-anchor: middle; dominant-baseline: middle; }
-.die-value { font-size: 38px; }
-.die-d4 .die-value { font-size: 30px; }
+.die-face { fill: var(--die-text); }
+.die-value { font-size: 30px; }
 
 button.die:hover:not(:disabled) { background: none; transform: translateY(-3px); }
 button.die:active:not(:disabled) { transform: translateY(-1px); }
