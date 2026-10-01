@@ -1,11 +1,15 @@
+export const COLORS = ['red', 'blue', 'green', 'yellow'] as const;
+export type Color = typeof COLORS[number];
+
 export const DIE_SIDES = [4, 6, 8, 12] as const;
 export type Sides = typeof DIE_SIDES[number];
 
-/** Dice of each type in the bag (4 types × 15 = 60 dice). */
-export const COPIES = 15;
+/** Dice of each color/type combination in the bag (4 colors × 4 types × 4 = 64 dice). */
+export const COPIES = 4;
 
 export interface Die {
     id: string;
+    color: Color;
     sides: Sides;
     value: number;
 }
@@ -23,9 +27,11 @@ export function roll(die: Die, rng: Rng = Math.random): Die {
 
 export function createBag(): Die[] {
     const bag: Die[] = [];
-    for (const sides of DIE_SIDES) {
-        for (let copy = 0; copy < COPIES; copy++) {
-            bag.push({ id: `d${sides}-${copy}`, sides, value: 1 });
+    for (const color of COLORS) {
+        for (const sides of DIE_SIDES) {
+            for (let copy = 0; copy < COPIES; copy++) {
+                bag.push({ id: `${color}-d${sides}-${copy}`, color, sides, value: 1 });
+            }
         }
     }
     return bag;

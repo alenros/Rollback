@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Die, Sides } from '../../src/lib/dice';
+import type { Color, Die, Sides } from '../../src/lib/dice';
 import {
     applyAction, normalizeGame, placePoints, standings, startGame, startNextRound,
     type GameState,
@@ -17,7 +17,8 @@ function seeded(seed: number) {
     };
 }
 
-const die = (id: string, value: number, sides: Sides = 12): Die => ({ id, sides, value });
+/** All red by default, so color never gets in the way unless a test asks for it. */
+const die = (id: string, value: number, sides: Sides = 12, color: Color = 'red'): Die => ({ id, color, sides, value });
 
 const PLAYERS = [
     { id: 'a', name: 'Ann' },
@@ -57,7 +58,7 @@ const pass = (s: GameState, playerId: string, ...rerollIds: string[]) =>
     applyAction(s, { type: 'pass', playerId, rerollIds }, ones);
 
 describe('startGame', () => {
-    it('deals 9 rolled dice to each player from one 60-die bag', () => {
+    it('deals 9 rolled dice to each player from one 64-die bag', () => {
         const s = startGame(PLAYERS, seeded(1));
         expect(s.phase).toBe('playing');
         expect(s.round).toBe(1);
@@ -66,6 +67,7 @@ describe('startGame', () => {
         expect(new Set(all.map(d => d.id)).size).toBe(27);
         for (const d of all) {
             expect([4, 6, 8, 12]).toContain(d.sides);
+            expect(['red', 'blue', 'green', 'yellow']).toContain(d.color);
             expect(d.value).toBeGreaterThanOrEqual(1);
             expect(d.value).toBeLessThanOrEqual(d.sides);
         }
@@ -193,6 +195,78 @@ describe('bombs', () => {
         expect(s.finished).toEqual(['b']);
         expect(s.table).toBeNull();
         expect(s.turn).toBe('c');
+    });
+});
+
+describe('picking up (Scout-style)', () => {
+    const pickup = (s: GameState, playerId: string, dieId: string) =>
+        applyAction(s, { type: 'pickup', playerId, dieId }, ones);
+
+    it('takes a table die behind your screen, rerolled, and counts as a pass', () => {
+        let s = makeState({
+            a: [die('a1', 9), die('a2', 9), die('a3', 2)],
+            b: [die('b1', 3), die('b2', 4), die('b3', 5), die('b4', 12)],
+            c: [die('c1', 7), die('c2', 8)],
+        });
+        s = play(s, 'a', 'a3');             // single 2
+        s = play(s, 'b', 'b1', 'b2');       // run 3-4
+        s = pickup(s, 'c', 'b2');           // the 4: an end die
+        expect(s.table!.dice.map(d => d.id)).toEqual(['b1']);
+        expect(s.table!.playerId).toBe('b');
+        expect(s.hands.c.find(d => d.id === 'b2')!.value).toBe(1);
+        expect(s.rolled.c).toEqual(['b2']);
+        expect(s.passed).toEqual(['c']);
+        expect(s.turn).toBe('a');
+    });
+
+    it('cannot break a run by taking a middle die', () => {
+        const s = makeState({
+            a: [die('a1', 2)],
+            b: [die('b1', 12)],
+            c: [die('c1', 7)],
+        }, { table: { playerId: 'b', dice: [die('x', 3), die('y', 4), die('z', 5)] } });
+        expect(() => pickup(s, 'a', 'y')).toThrow(/break the play/);
+        expect(() => pickup(s, 'a', 'nope')).toThrow(/not on the table/);
+        expect(pickup(s, 'a', 'z').table!.dice.map(d => d.id)).toEqual(['x', 'y']);
+    });
+
+    it('taking the last die clears the table, and the next player in turn leads', () => {
+        let s = makeState({
+            a: [die('a1', 6), die('a2', 9)],
+            b: [die('b1', 3)],
+            c: [die('c1', 7)],
+        });
+        s = play(s, 'a', 'a1');
+        s = pickup(s, 'b', 'a1');
+        expect(s.table).toBeNull();
+        expect(s.trick).toBe(2);
+        expect(s.passed).toEqual([]);
+        expect(s.turn).toBe('c'); // the player after the one who picked up
+    });
+});
+
+describe('color', () => {
+    it('a one-color set must be beaten by a one-color set', () => {
+        const s = makeState({
+            a: [die('m1', 8, 12, 'red'), die('m2', 8, 12, 'blue'), die('m3', 9, 12, 'green'), die('m4', 9, 12, 'green')],
+            b: [die('b1', 1)],
+            c: [die('c1', 1)],
+        }, { table: { playerId: 'b', dice: [die('t1', 7, 12, 'green'), die('t2', 7, 12, 'green')] } });
+        expect(() => play(s, 'a', 'm1', 'm2')).toThrow(/does not beat/);
+        expect(play(s, 'a', 'm3', 'm4').table!.playerId).toBe('a');
+    });
+
+    it('rainbow sets of 4 are bombs', () => {
+        let s = makeState({
+            a: [die('a1', 9), die('a2', 2)],
+            b: [die('b1', 3, 12, 'red'), die('b2', 3, 12, 'blue'), die('b3', 3, 12, 'green'), die('b4', 3, 12, 'yellow'), die('b5', 1)],
+            c: [die('c1', 7)],
+        });
+        s = play(s, 'a', 'a1');
+        s = play(s, 'b', 'b1', 'b2', 'b3', 'b4');
+        expect(s.table).toBeNull();
+        expect(s.turn).toBe('b');
+        expect(s.hands.b.map(d => d.id)).toEqual(['b5']);
     });
 });
 

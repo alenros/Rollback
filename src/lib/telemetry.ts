@@ -7,14 +7,14 @@
  * the events after each transaction commits.
  *
  * Privacy: no player names are recorded, only the random per-game player ids.
- * Dice are encoded compactly as "sides:value" strings, e.g. "8:5".
+ * Dice are encoded compactly as "color:sides:value" strings, e.g. "red:8:5".
  */
 import type { Die } from './dice';
 import { RULES_VERSION, standings, type Action, type GameState } from './game';
 import { beats, classifyPlay, possiblePlays, type Play } from './plays';
 
 type DieCode = string;
-type PlaySummary = Pick<Play, 'kind' | 'count' | 'value'>;
+type PlaySummary = Pick<Play, 'kind' | 'count' | 'value' | 'color' | 'of'>;
 
 interface Base {
     gameId: string;
@@ -68,6 +68,18 @@ export type TelemetryEvent = Base & (
         handSizes: Record<string, number>;
     }
     | {
+        type: 'pickup';
+        trick: number;
+        player: string;
+        hand: DieCode[];
+        table: PlaySummary;
+        beatOptions: number;
+        /** The die taken, before and after its reroll. */
+        die: { from: DieCode; to: DieCode };
+        trickEnded: boolean;
+        handSizes: Record<string, number>;
+    }
+    | {
         type: 'roundEnd';
         /** Finishing order, first to last. */
         finished: string[];
@@ -80,10 +92,11 @@ export type TelemetryEvent = Base & (
     }
 );
 
-const code = (d: Die): DieCode => `${d.sides}:${d.value}`;
+const code = (d: Die): DieCode => `${d.color}:${d.sides}:${d.value}`;
+/** Firebase rejects `undefined`, so optional fields are only set when present. */
 const summary = (dice: readonly Die[]): PlaySummary => {
-    const { kind, count, value } = classifyPlay(dice)!;
-    return { kind, count, value };
+    const { kind, count, value, color, of } = classifyPlay(dice)!;
+    return { kind, count, value, ...(color && { color }), ...(of && { of }) };
 };
 const handSizes = (s: GameState) => Object.fromEntries(s.seating.map(id => [id, s.hands[id]?.length ?? 0]));
 
@@ -128,6 +141,19 @@ export function buildEvents(before: GameState | null, after: GameState, action?:
             beat: before!.table ? summary(before!.table.dice) : null,
             pickedUp: handAfter.filter(d => picked.has(d.id)).map(code),
             wentOut: after.finished.includes(action.playerId) && !before!.finished.includes(action.playerId),
+            trickEnded,
+            handSizes: handSizes(after),
+        });
+    } else if (action.type === 'pickup') {
+        const table = before!.table!.dice;
+        const tablePlay = classifyPlay(table)!;
+        const taken = table.find(d => d.id === action.dieId)!;
+        const now = (after.hands[action.playerId] ?? []).find(d => d.id === action.dieId)!;
+        events.push({
+            ...common, type: 'pickup',
+            table: summary(table),
+            beatOptions: possiblePlays(hand).filter(p => beats(p, tablePlay)).length,
+            die: { from: code(taken), to: code(now) },
             trickEnded,
             handSizes: handSizes(after),
         });

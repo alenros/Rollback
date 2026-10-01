@@ -16,7 +16,7 @@ const LOG_LIMIT = 40;
  * Bump whenever the rules change, so telemetry from different rule sets can be
  * told apart. Recorded on every game's `gameStart` event.
  */
-export const RULES_VERSION = '2026-10-01';
+export const RULES_VERSION = '2026-10-01-colors-scout';
 
 export type Phase = 'playing' | 'roundOver' | 'gameOver';
 
@@ -59,7 +59,8 @@ export interface GameState {
 
 export type Action =
     | { type: 'play'; playerId: string; dieIds: string[] }
-    | { type: 'pass'; playerId: string; rerollIds: string[] };
+    | { type: 'pass'; playerId: string; rerollIds: string[] }
+    | { type: 'pickup'; playerId: string; dieId: string };
 
 export class GameError extends Error {
     constructor(message: string) {
@@ -149,9 +150,9 @@ function dealRound(state: GameState, leader: string, rng: Rng): GameState {
 export function applyAction(state: GameState, action: Action, rng: Rng = Math.random): GameState {
     if (state.phase !== 'playing') throw new GameError('The round is over');
     if (state.turn !== action.playerId) throw new GameError("It's not your turn");
-    const next = action.type === 'play'
-        ? applyPlay(state, action.playerId, action.dieIds, rng)
-        : applyPass(state, action.playerId, action.rerollIds, rng);
+    const next = action.type === 'play' ? applyPlay(state, action.playerId, action.dieIds, rng)
+        : action.type === 'pass' ? applyPass(state, action.playerId, action.rerollIds, rng)
+        : applyPickup(state, action.playerId, action.dieId, rng);
     return { ...next, seq: state.seq + 1 };
 }
 
@@ -184,7 +185,7 @@ function applyPlay(state: GameState, playerId: string, dieIds: string[], rng: Rn
             // Take the beaten dice behind your screen and reroll them.
             pickedUp = state.table.dice.map(d => roll(d, rng));
             remaining = [...remaining, ...pickedUp];
-            const types = pickedUp.map(d => `d${d.sides}`).join(', ');
+            const types = pickedUp.map(d => `${d.color} d${d.sides}`).join(', ');
             log = appendLog(state.log,
                 `${name} beats ${describePlay(tablePlay)} with ${describePlay(play)} and picks up ${types}.`);
         }
@@ -228,6 +229,38 @@ function applyPass(state: GameState, playerId: string, rerollIds: string[], rng:
     return advanceTurn(next, playerId);
 }
 
+/**
+ * Scout-style: take one die from the table play behind your screen, rerolled.
+ * Counts as a pass for ending the trick. What stays on the table must still be
+ * a legal play (so a run gives up only an end die). Taking the last die clears
+ * the table, and the next player in turn leads a single.
+ */
+export function canPickUp(table: TablePlay, dieId: string): boolean {
+    const rest = table.dice.filter(d => d.id !== dieId);
+    return rest.length < table.dice.length && (rest.length === 0 || classifyPlay(rest) !== null);
+}
+
+function applyPickup(state: GameState, playerId: string, dieId: string, rng: Rng): GameState {
+    const table = state.table;
+    if (!table) throw new GameError('There is nothing on the table to pick up');
+    const taken = table.dice.find(d => d.id === dieId);
+    if (!taken) throw new GameError('That die is not on the table');
+    if (!canPickUp(table, dieId)) throw new GameError('Taking that die would break the play: take an end die');
+
+    const rest = table.dice.filter(d => d.id !== dieId);
+    const rolledDie = roll(taken, rng);
+    const next: GameState = {
+        ...state,
+        hands: { ...state.hands, [playerId]: [...(state.hands[playerId] ?? []), rolledDie] },
+        table: { playerId: table.playerId, dice: rest },
+        passed: [...state.passed, playerId],
+        rolled: { ...state.rolled, [playerId]: [dieId] },
+        log: appendLog(state.log, `${state.names[playerId]} picks up a ${taken.color} d${taken.sides} from the table.`),
+    };
+    if (rest.length === 0) return endTrick(next, nextClockwise(next, playerId, id => !isOut(next, id))!);
+    return advanceTurn(next, playerId);
+}
+
 function pickDice(hand: readonly Die[], ids: readonly string[]): Die[] {
     if (new Set(ids).size !== ids.length) throw new GameError('Each die can only be used once');
     return ids.map(id => {
@@ -266,12 +299,14 @@ function advanceTurn(state: GameState, fromId: string): GameState {
     return { ...state, turn: nextClockwise(state, fromId, id => !isOut(state, id))! };
 }
 
-function endTrick(state: GameState): GameState {
+/**
+ * Clear the table and start the next trick. By default the owner of the last
+ * play leads; if they have gone out, the next remaining player on their left.
+ */
+function endTrick(state: GameState, leaderOverride?: string): GameState {
     const owner = state.table!.playerId;
-    // The owner leads; if they have gone out, the next remaining player on their left.
-    const leader = isOut(state, owner)
-        ? nextClockwise(state, owner, id => !isOut(state, id))!
-        : owner;
+    const leader = leaderOverride
+        ?? (isOut(state, owner) ? nextClockwise(state, owner, id => !isOut(state, id))! : owner);
     return {
         ...state,
         table: null,

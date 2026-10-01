@@ -9,11 +9,11 @@
     --success: #28a745;
     --danger: #dc3545;
 
-    /* One color per die type — visual only, no gameplay meaning. */
-    --die-d4: #e03131;
-    --die-d6: #1c7ed6;
-    --die-d8: #2f9e44;
-    --die-d12: #9c36b5;
+    /* Die colors (gameplay: bombs and color-following). Shape shows the type. */
+    --die-red: #e03131;
+    --die-blue: #1c7ed6;
+    --die-green: #2f9e44;
+    --die-yellow: #f2b705;
 }
 
 * {
@@ -234,10 +234,19 @@ button:focus-visible {
     transition: transform 0.15s;
 }
 
-.die-d4 { --die-color: var(--die-d4); }
-.die-d6 { --die-color: var(--die-d6); }
-.die-d8 { --die-color: var(--die-d8); }
-.die-d12 { --die-color: var(--die-d12); }
+.die-red { --die-color: var(--die-red); }
+.die-blue { --die-color: var(--die-blue); }
+.die-green { --die-color: var(--die-green); }
+.die-yellow { --die-color: var(--die-yellow); --die-text: #3b2f00; }
+
+/* Color mark for color-blind players. */
+.die-glyph {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 10px;
+    color: var(--die-color);
+}
 
 .die-shape {
     display: block;
