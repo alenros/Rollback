@@ -1,0 +1,27 @@
+---
+import Layout from '../../components/Layout.astro';
+import { Content as ClassicRules } from '../../../Rules.classic.md';
+import { Content as ColorsRules } from '../../../Rules.md';
+import { RULESETS, type RulesetId } from '../../lib/rulesets';
+
+/** One rules document per ruleset. */
+const DOCS: Record<RulesetId, typeof ClassicRules> = {
+    classic: ClassicRules,
+    colors: ColorsRules,
+};
+
+export function getStaticPaths() {
+    return Object.keys(RULESETS).map(id => ({ params: { id } }));
+}
+
+const id = Astro.params.id as RulesetId;
+const Doc = DOCS[id];
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<Layout title={`Rollback - ${RULESETS[id].name} rules`} showSmallLogo={true} wide={true}>
+    <article class="rules">
+        <p><a href={`${baseUrl}rules`}>← All rulesets</a></p>
+        <Doc />
+    </article>
+</Layout>

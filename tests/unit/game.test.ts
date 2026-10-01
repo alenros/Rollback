@@ -30,6 +30,7 @@ function makeState(hands: Record<string, Die[]>, overrides: Partial<GameState> =
     const seating = Object.keys(hands);
     return {
         gameId: 'test',
+        rulesetId: 'colors',
         seq: 0,
         round: 1,
         trick: 1,
@@ -198,7 +199,7 @@ describe('bombs', () => {
     });
 });
 
-describe('picking up (Scout-style)', () => {
+describe('picking up', () => {
     const pickup = (s: GameState, playerId: string, dieId: string) =>
         applyAction(s, { type: 'pickup', playerId, dieId }, ones);
 

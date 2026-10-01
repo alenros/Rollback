@@ -6,9 +6,10 @@
  */
 import { firebase, getDatabase } from './firebase';
 import {
-    applyAction, GameError, MAX_PLAYERS, MIN_PLAYERS, normalizeGame, startGame, startNextRound,
+    applyAction, GameError, normalizeGame, startGame, startNextRound,
     type Action, type GameState,
 } from './game';
+import { DEFAULT_RULESET_ID, getRuleset, RULESETS, type RulesetId } from './rulesets';
 import { GameStatus } from './game-status';
 import type { Player } from './player';
 import { generatePlayerId, generateRoomCode, playersInOrder, type Room } from './room';
@@ -56,6 +57,7 @@ export async function createRoom(playerName: string): Promise<{ roomCode: string
         players: { [player.id]: player },
         createdAt: firebase.database.ServerValue.TIMESTAMP,
         hostId: player.id,
+        rulesetId: DEFAULT_RULESET_ID,
     };
     await roomRef(roomCode).set(room);
     return { roomCode, player };
@@ -67,8 +69,9 @@ export async function joinRoom(roomCode: string, playerName: string): Promise<Pl
     const player: Player = { id: generatePlayerId(), name: playerName, isHost: false, joinedAt: Date.now() };
     await transact<Room>(ref, room => {
         if (room.status !== GameStatus.WAITING) throw new GameError('Game is already in progress');
-        if (Object.keys(room.players ?? {}).length >= MAX_PLAYERS) {
-            throw new GameError(`Room is full (${MAX_PLAYERS} players max)`);
+        const max = getRuleset(room.rulesetId).maxPlayers;
+        if (Object.keys(room.players ?? {}).length >= max) {
+            throw new GameError(`Room is full (${max} players max)`);
         }
         return { ...room, players: { ...room.players, [player.id]: player } };
     });
@@ -106,6 +109,21 @@ function recordTelemetry(events: TelemetryEvent[]): void {
     getDatabase().ref().update(updates).catch(error => console.warn('Telemetry write failed:', error));
 }
 
+/** Host action in the lobby: choose which ruleset the game will use. */
+export async function setRoomRuleset(roomCode: string, hostId: string, rulesetId: RulesetId): Promise<void> {
+    if (!(rulesetId in RULESETS)) throw new GameError('Unknown ruleset');
+    const ref = roomRef(roomCode);
+    await ref.once('value');
+    await transact<Room>(ref, room => {
+        if (room.hostId !== hostId) throw new GameError('Only the host can choose the rules');
+        if (room.status !== GameStatus.WAITING) throw new GameError('The game has already started');
+        const rules = getRuleset(rulesetId);
+        const count = Object.keys(room.players ?? {}).length;
+        if (count > rules.maxPlayers) throw new GameError(`${rules.name} allows at most ${rules.maxPlayers} players`);
+        return { ...room, rulesetId };
+    });
+}
+
 export async function startRoomGame(roomCode: string, hostId: string): Promise<void> {
     const ref = roomRef(roomCode);
     await ref.once('value');
@@ -116,8 +134,9 @@ export async function startRoomGame(roomCode: string, hostId: string): Promise<v
         if (room.hostId !== hostId) throw new GameError('Only the host can start the game');
         if (room.status !== GameStatus.WAITING) return room; // already started
         const players = playersInOrder(room);
-        if (players.length < MIN_PLAYERS) throw new GameError(`Need at least ${MIN_PLAYERS} players`);
-        started = startGame(players, Math.random, { gameId });
+        const rules = getRuleset(room.rulesetId);
+        if (players.length < rules.minPlayers) throw new GameError(`Need at least ${rules.minPlayers} players`);
+        started = startGame(players, Math.random, { gameId, rulesetId: rules.id as RulesetId });
         return { ...room, status: GameStatus.PLAYING, game: started };
     });
     if (started) recordTelemetry(buildEvents(null, started));

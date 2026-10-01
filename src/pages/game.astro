@@ -118,6 +118,7 @@ import Layout from '../components/Layout.astro';
             passBtn.disabled = busy || !controls.canPass;
             passBtn.textContent = controls.passLabel;
             pickupBtn.disabled = busy || !controls.canPickUp;
+            pickupBtn.hidden = !controls.showPickup;
 
             document.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.sort === view.sortBy);

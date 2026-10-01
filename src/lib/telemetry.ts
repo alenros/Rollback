@@ -10,8 +10,9 @@
  * Dice are encoded compactly as "color:sides:value" strings, e.g. "red:8:5".
  */
 import type { Die } from './dice';
-import { RULES_VERSION, standings, type Action, type GameState } from './game';
-import { beats, classifyPlay, possiblePlays, type Play } from './plays';
+import { rulesOf, standings, type Action, type GameState } from './game';
+import type { Play } from './plays';
+import { beatingPlays, type Ruleset } from './rulesets';
 
 type DieCode = string;
 type PlaySummary = Pick<Play, 'kind' | 'count' | 'value' | 'color' | 'of'>;
@@ -25,6 +26,7 @@ interface Base {
 export type TelemetryEvent = Base & (
     | {
         type: 'gameStart';
+        rulesetId: string;
         rulesVersion: string;
         playerCount: number;
         /** Player ids in clockwise order. */
@@ -94,8 +96,8 @@ export type TelemetryEvent = Base & (
 
 const code = (d: Die): DieCode => `${d.color}:${d.sides}:${d.value}`;
 /** Firebase rejects `undefined`, so optional fields are only set when present. */
-const summary = (dice: readonly Die[]): PlaySummary => {
-    const { kind, count, value, color, of } = classifyPlay(dice)!;
+const summary = (rules: Ruleset, dice: readonly Die[]): PlaySummary => {
+    const { kind, count, value, color, of } = rules.classifyPlay(dice)!;
     return { kind, count, value, ...(color && { color }), ...(of && { of }) };
 };
 const handSizes = (s: GameState) => Object.fromEntries(s.seating.map(id => [id, s.hands[id]?.length ?? 0]));
@@ -107,12 +109,13 @@ const handSizes = (s: GameState) => Object.fromEntries(s.seating.map(id => [id, 
  * - neither: the host started the next round.
  */
 export function buildEvents(before: GameState | null, after: GameState, action?: Action): TelemetryEvent[] {
+    const rules = rulesOf(after);
     const base = { gameId: after.gameId, seq: after.seq };
     const events: TelemetryEvent[] = [];
 
     if (!before) {
         events.push({
-            ...base, round: 0, type: 'gameStart', rulesVersion: RULES_VERSION,
+            ...base, round: 0, type: 'gameStart', rulesetId: rules.id, rulesVersion: rules.version,
             playerCount: after.seating.length, seating: after.seating,
             handSize: after.handSize, totalRounds: after.totalRounds,
         });
@@ -137,8 +140,8 @@ export function buildEvents(before: GameState | null, after: GameState, action?:
         events.push({
             ...common, type: 'play',
             dice: dice.map(code),
-            play: summary(dice),
-            beat: before!.table ? summary(before!.table.dice) : null,
+            play: summary(rules, dice),
+            beat: before!.table ? summary(rules, before!.table.dice) : null,
             pickedUp: handAfter.filter(d => picked.has(d.id)).map(code),
             wentOut: after.finished.includes(action.playerId) && !before!.finished.includes(action.playerId),
             trickEnded,
@@ -146,25 +149,25 @@ export function buildEvents(before: GameState | null, after: GameState, action?:
         });
     } else if (action.type === 'pickup') {
         const table = before!.table!.dice;
-        const tablePlay = classifyPlay(table)!;
+        const tablePlay = rules.classifyPlay(table)!;
         const taken = table.find(d => d.id === action.dieId)!;
         const now = (after.hands[action.playerId] ?? []).find(d => d.id === action.dieId)!;
         events.push({
             ...common, type: 'pickup',
-            table: summary(table),
-            beatOptions: possiblePlays(hand).filter(p => beats(p, tablePlay)).length,
+            table: summary(rules, table),
+            beatOptions: beatingPlays(rules, hand, tablePlay).length,
             die: { from: code(taken), to: code(now) },
             trickEnded,
             handSizes: handSizes(after),
         });
     } else {
         const table = before!.table!.dice;
-        const tablePlay = classifyPlay(table)!;
+        const tablePlay = rules.classifyPlay(table)!;
         const handAfter = after.hands[action.playerId] ?? [];
         events.push({
             ...common, type: 'pass',
-            table: summary(table),
-            beatOptions: possiblePlays(hand).filter(p => beats(p, tablePlay)).length,
+            table: summary(rules, table),
+            beatOptions: beatingPlays(rules, hand, tablePlay).length,
             allowance: table.length,
             rerolls: action.rerollIds.map(id => ({
                 from: code(hand.find(d => d.id === id)!),

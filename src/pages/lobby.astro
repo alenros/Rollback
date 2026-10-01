@@ -2,6 +2,9 @@
 import Layout from '../components/Layout.astro';
 import RoomCode from '../components/RoomCode.astro';
 import PlayerList from '../components/PlayerList.astro';
+import { rulesetList } from '../lib/rulesets';
+
+const rulesets = rulesetList();
 ---
 
 <Layout title="Rollback - Lobby" showSmallLogo={true}>
@@ -9,6 +12,13 @@ import PlayerList from '../components/PlayerList.astro';
         <h2>Waiting Room</h2>
         <RoomCode />
         <PlayerList containerId="players-container" title="Players" />
+        <div class="input-group ruleset-picker">
+            <label for="ruleset-select">Rules</label>
+            <select id="ruleset-select" disabled>
+                {rulesets.map(r => <option value={r.id}>{r.name}</option>)}
+            </select>
+            <p id="ruleset-summary" class="hint"></p>
+        </div>
         <p id="lobby-hint" class="hint"></p>
         <button id="start-game-btn" style="display: none;">Start Game</button>
         <button id="leave-room-btn">Leave Room</button>
@@ -16,7 +26,8 @@ import PlayerList from '../components/PlayerList.astro';
 </Layout>
 
 <script>
-    import { GameError, MAX_PLAYERS, MIN_PLAYERS } from '../lib/game';
+    import { GameError } from '../lib/game';
+    import { getRuleset, type RulesetId } from '../lib/rulesets';
     import { GameStatus } from '../lib/game-status';
     import { playersInOrder } from '../lib/room';
     import { clearSession, escapeHtml, getCurrentPlayer, getRoomCodeFromUrl } from '../lib/session';
@@ -35,7 +46,9 @@ import PlayerList from '../components/PlayerList.astro';
         const roomCodeDisplay = document.getElementById('display-room-code');
         if (roomCodeDisplay) roomCodeDisplay.textContent = roomCode;
 
-        const { watchRoom, startRoomGame, leaveRoom } = await import('../lib/room-actions');
+        const { watchRoom, startRoomGame, leaveRoom, setRoomRuleset } = await import('../lib/room-actions');
+        const rulesetSelect = document.getElementById('ruleset-select') as HTMLSelectElement;
+        const rulesetSummary = document.getElementById('ruleset-summary') as HTMLElement;
         const startBtn = document.getElementById('start-game-btn') as HTMLButtonElement;
         const hint = document.getElementById('lobby-hint') as HTMLElement;
 
@@ -67,11 +80,25 @@ import PlayerList from '../components/PlayerList.astro';
             }
 
             const isHost = room.hostId === currentPlayer.id;
-            const enough = players.length >= MIN_PLAYERS;
+            const rules = getRuleset(room.rulesetId);
+            rulesetSelect.value = rules.id;
+            rulesetSelect.disabled = !isHost;
+            rulesetSummary.innerHTML = `${escapeHtml(rules.summary)} <a href="${BASE_URL}rules/${rules.id}">Full rules</a>`;
+
+            const enough = players.length >= rules.minPlayers;
             startBtn.style.display = isHost && enough ? 'inline-block' : 'none';
             hint.textContent = !enough
-                ? `Waiting for players… ${players.length}/${MIN_PLAYERS} needed (max ${MAX_PLAYERS}).`
+                ? `Waiting for players… ${players.length}/${rules.minPlayers} needed (max ${rules.maxPlayers}).`
                 : isHost ? 'Ready when you are. Seating follows join order.' : 'Waiting for the host to start.';
+        });
+
+        rulesetSelect.addEventListener('change', async () => {
+            try {
+                await setRoomRuleset(roomCode, currentPlayer.id, rulesetSelect.value as RulesetId);
+            } catch (error) {
+                console.error('Error choosing rules:', error);
+                alert(error instanceof GameError ? error.message : 'Failed to change the rules');
+            }
         });
 
         startBtn.addEventListener('click', async () => {

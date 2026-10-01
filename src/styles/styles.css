@@ -115,7 +115,23 @@ input {
     transition: border-color 0.3s;
 }
 
-input:focus {
+select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    background: white;
+    color: var(--text);
+}
+
+select:disabled {
+    background: var(--surface);
+    color: var(--text);
+    opacity: 1;
+}
+
+input:focus, select:focus {
     outline: none;
     border-color: var(--accent);
 }
@@ -239,14 +255,6 @@ button:focus-visible {
 .die-green { --die-color: var(--die-green); }
 .die-yellow { --die-color: var(--die-yellow); --die-text: #3b2f00; }
 
-/* Color mark for color-blind players. */
-.die-glyph {
-    position: absolute;
-    top: 0;
-    left: 0;
-    font-size: 10px;
-    color: var(--die-color);
-}
 
 .die-shape {
     display: block;
@@ -352,6 +360,17 @@ button.die:focus-visible .die-outline > * { stroke: #ffd43b; stroke-width: 8; }
 }
 
 .turn-name { color: var(--accent); }
+
+.ruleset-name {
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    vertical-align: middle;
+}
 
 .seats {
     display: grid;
@@ -487,3 +506,22 @@ body.my-turn .hand-area { box-shadow: 0 0 0 3px var(--accent); }
     .die { width: 50px; height: 50px; }
     .game-header { font-size: 16px; }
 }
+
+/* ---------------------------------------------------------------- Rulesets */
+
+.ruleset-card {
+    display: block;
+    text-align: left;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.ruleset-card:hover { border-color: var(--accent); }
+.ruleset-card strong { display: block; color: var(--accent); margin-bottom: 4px; }
+.ruleset-card span { color: var(--muted); font-size: 14px; }
+.ruleset-picker { text-align: left; }

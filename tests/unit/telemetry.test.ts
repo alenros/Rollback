@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Color, Die } from '../../src/lib/dice';
 import { applyAction, startGame, startNextRound, type GameState } from '../../src/lib/game';
-import { possiblePlays } from '../../src/lib/plays';
 import { buildEvents, eventKey } from '../../src/lib/telemetry';
 
 const die = (id: string, value: number, sides: Die['sides'] = 12, color: Color = 'red'): Die => ({ id, color, sides, value });
@@ -12,23 +11,15 @@ function threePlayerState(hands: Record<string, Die[]>): GameState {
     return { ...s, hands, turn: 'a' };
 }
 
-describe('possiblePlays', () => {
-    it('lists each distinct single, set, run and bomb once', () => {
-        const plays = possiblePlays([1, 2, 3, 4, 5, 5].map((v, i) => die(`d${i}`, v))); // all red
-        expect(plays).toContainEqual({ kind: 'set', count: 2, value: 5, color: 'red' });
-        expect(plays).toContainEqual({ kind: 'run', count: 4, value: 4, color: 'red' });
-        expect(plays).toContainEqual({ kind: 'bomb', of: 'run', count: 5, value: 5, color: 'red' });
-        expect(plays.filter(p => p.kind === 'single')).toHaveLength(5);
-        expect(plays.some(p => p.kind !== 'single' && !p.color)).toBe(false); // nothing mixed is possible
-    });
-});
-
 describe('buildEvents', () => {
     it('opens with gameStart and roundStart, without player names', () => {
         const s = startGame([{ id: 'a', name: 'Ann' }, { id: 'b', name: 'Ben' }], ones, { gameId: 'g1' });
         const events = buildEvents(null, s);
         expect(events.map(e => e.type)).toEqual(['gameStart', 'roundStart']);
-        expect(events[0]).toMatchObject({ gameId: 'g1', seq: 0, playerCount: 2, seating: ['a', 'b'] });
+        expect(events[0]).toMatchObject({
+            gameId: 'g1', seq: 0, playerCount: 2, seating: ['a', 'b'],
+            rulesetId: 'colors', rulesVersion: '2026-10-01-colors',
+        });
         expect(JSON.stringify(events)).not.toMatch(/Ann|Ben/);
         const round = events[1] as Extract<typeof events[number], { type: 'roundStart' }>;
         expect(round.hands.a).toHaveLength(9);

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { COLORS, type Color, type Die, type Sides } from '../../src/lib/dice';
-import { beats, classifyPlay, describePlay, possiblePlays, type Play } from '../../src/lib/plays';
+import { describePlay, type Play } from '../../src/lib/plays';
+import { beatingPlays, RULESETS } from '../../src/lib/rulesets';
+
+const rules = RULESETS.colors;
+const { classifyPlay, beats } = rules;
 
 let seq = 0;
 /** Without an explicit color, dice cycle through the colors so groups come out mixed. */
@@ -18,7 +22,7 @@ const play = (dice: Die[]): Play => {
 };
 const rainbow = (value: number) => COLORS.map(c => d(value, c));
 
-describe('classifyPlay', () => {
+describe('Colors: classifyPlay', () => {
     it('classifies singles, sets and runs, noting one-color plays', () => {
         expect(classifyPlay([d(7, 'red')])).toEqual({ kind: 'single', count: 1, value: 7, color: 'red' });
         expect(classifyPlay(same(2, 5))).toEqual({ kind: 'set', count: 2, value: 5 });
@@ -46,7 +50,7 @@ describe('classifyPlay', () => {
     });
 });
 
-describe('beats', () => {
+describe('Colors: beats', () => {
     it('a single is beaten by a higher single of any color, or a 2-die set or run', () => {
         expect(beats(play([d(11, 'blue')]), play([d(10, 'red')]))).toBe(true);
         expect(beats(play([d(10)]), play([d(10)]))).toBe(false);
@@ -88,14 +92,15 @@ describe('beats', () => {
     });
 });
 
-describe('possiblePlays', () => {
-    it('includes one-color variants and both kinds of bomb', () => {
+describe('beatingPlays', () => {
+    it('finds one-color answers and both kinds of bomb', () => {
         const hand = [...runOf(1, 5, 'red'), d(3, 'blue'), d(3, 'green'), d(3, 'yellow')];
-        const plays = possiblePlays(hand);
+        const table = play([d(9, 'blue'), d(10, 'blue')]); // blue run 9-10: needs a one-color run
+        const plays = beatingPlays(rules, hand, table);
         expect(plays).toContainEqual({ kind: 'bomb', of: 'run', count: 5, value: 5, color: 'red' });
         expect(plays).toContainEqual({ kind: 'bomb', of: 'set', count: 4, value: 3 });
         expect(plays).toContainEqual({ kind: 'run', count: 3, value: 3, color: 'red' });
-        expect(plays).toContainEqual({ kind: 'set', count: 3, value: 3 });
+        expect(plays.some(p => p.kind === 'run' && !p.color)).toBe(false); // mixed runs can't follow
     });
 });
 

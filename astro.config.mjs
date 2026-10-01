@@ -6,4 +6,6 @@ import { defineConfig } from 'astro/config';
 export default defineConfig({
   site: process.env.SITE,
   base: process.env.BASE_PATH ?? '/',
+  // PORT lets the dev server run beside another one; Playwright expects the default 4321.
+  server: { port: Number(process.env.PORT) || 4321 },
 });

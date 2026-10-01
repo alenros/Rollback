@@ -1,22 +1,16 @@
 /**
- * Pure Rollback rules engine. No Firebase, no DOM: every function takes a state
+ * Pure Rollback game engine. No Firebase, no DOM: every function takes a state
  * and returns a new one, so it can run inside a Realtime Database transaction
  * on any client and be unit-tested in isolation.
+ *
+ * What counts as a play, what beats what, the bag and the deal all come from the
+ * game's ruleset (rulesets.ts); this file runs the turn structure around them.
  */
-import { createBag, roll, shuffle, type Die, type Rng } from './dice';
-import { beats, classifyPlay, describePlay } from './plays';
+import { bagSize, buildBag, roll, shuffle, type Die, type Rng } from './dice';
+import { describePlay } from './plays';
+import { DEFAULT_RULESET_ID, getRuleset, type Ruleset, type RulesetId } from './rulesets';
 
-export const DEFAULT_HAND_SIZE = 9;
-export const DEFAULT_ROUNDS = 3;
-export const MIN_PLAYERS = 2;
-export const MAX_PLAYERS = 5;
 const LOG_LIMIT = 40;
-
-/**
- * Bump whenever the rules change, so telemetry from different rule sets can be
- * told apart. Recorded on every game's `gameStart` event.
- */
-export const RULES_VERSION = '2026-10-01-colors-scout';
 
 export type Phase = 'playing' | 'roundOver' | 'gameOver';
 
@@ -28,6 +22,8 @@ export interface TablePlay {
 export interface GameState {
     /** Unique per game (rooms are short-lived and their codes get reused). */
     gameId: string;
+    /** Which ruleset this game is played under (see rulesets.ts). */
+    rulesetId: RulesetId;
     /** Counts committed state changes (moves and round starts); orders telemetry events. */
     seq: number;
     round: number;
@@ -78,23 +74,35 @@ export interface PlayerSeat {
 // Setup
 // ---------------------------------------------------------------------------
 
+/** The ruleset a game is played under. */
+export function rulesOf(state: Pick<GameState, 'rulesetId'>): Ruleset {
+    return getRuleset(state.rulesetId);
+}
+
 export function startGame(
     players: PlayerSeat[],
     rng: Rng = Math.random,
-    options: { handSize?: number; totalRounds?: number; gameId?: string } = {},
+    options: { rulesetId?: RulesetId; handSize?: number; totalRounds?: number; gameId?: string } = {},
 ): GameState {
-    if (players.length < MIN_PLAYERS || players.length > MAX_PLAYERS) {
-        throw new GameError(`Rollback needs ${MIN_PLAYERS}–${MAX_PLAYERS} players`);
+    const rulesetId = options.rulesetId ?? DEFAULT_RULESET_ID;
+    const rules = getRuleset(rulesetId);
+    if (players.length < rules.minPlayers || players.length > rules.maxPlayers) {
+        throw new GameError(`${rules.name} needs ${rules.minPlayers}–${rules.maxPlayers} players`);
+    }
+    const handSize = options.handSize ?? rules.handSize;
+    if (handSize * players.length > bagSize(rules.bag)) {
+        throw new GameError(`Not enough dice in the bag to deal ${handSize} each to ${players.length} players`);
     }
     const seating = players.map(p => p.id);
     const zeroes = Object.fromEntries(seating.map(id => [id, 0]));
     const base: GameState = {
         gameId: options.gameId ?? '',
+        rulesetId,
         seq: 0,
         round: 0,
         trick: 0,
-        totalRounds: options.totalRounds ?? DEFAULT_ROUNDS,
-        handSize: options.handSize ?? DEFAULT_HAND_SIZE,
+        totalRounds: options.totalRounds ?? rules.rounds,
+        handSize,
         seating,
         names: Object.fromEntries(players.map(p => [p.id, p.name])),
         hands: {},
@@ -122,7 +130,7 @@ export function startNextRound(state: GameState, rng: Rng = Math.random): GameSt
 }
 
 function dealRound(state: GameState, leader: string, rng: Rng): GameState {
-    const bag = shuffle(createBag(), rng);
+    const bag = shuffle(buildBag(rulesOf(state).bag), rng);
     const hands: Record<string, Die[]> = {};
     for (const id of state.seating) {
         hands[id] = bag.splice(0, state.handSize).map(d => roll(d, rng));
@@ -158,8 +166,9 @@ export function applyAction(state: GameState, action: Action, rng: Rng = Math.ra
 
 function applyPlay(state: GameState, playerId: string, dieIds: string[], rng: Rng): GameState {
     const hand = state.hands[playerId] ?? [];
+    const rules = rulesOf(state);
     const dice = pickDice(hand, dieIds);
-    const play = classifyPlay(dice);
+    const play = rules.classifyPlay(dice);
     if (!play) throw new GameError('Those dice are not a single, set, run, or bomb');
 
     const name = state.names[playerId];
@@ -171,8 +180,8 @@ function applyPlay(state: GameState, playerId: string, dieIds: string[], rng: Rn
         if (play.kind !== 'single') throw new GameError('The leader plays one die');
         log = appendLog(state.log, `${name} leads ${describePlay(play)}.`);
     } else {
-        const tablePlay = classifyPlay(state.table.dice)!;
-        if (!beats(play, tablePlay)) {
+        const tablePlay = rules.classifyPlay(state.table.dice)!;
+        if (!rules.beats(play, tablePlay)) {
             throw new GameError(`${describePlay(play)} does not beat ${describePlay(tablePlay)}`);
         }
         if (play.kind === 'bomb') {
@@ -230,22 +239,25 @@ function applyPass(state: GameState, playerId: string, rerollIds: string[], rng:
 }
 
 /**
- * Scout-style: take one die from the table play behind your screen, rerolled.
+ * Pick up: take one die from the table play behind your screen, rerolled.
  * Counts as a pass for ending the trick. What stays on the table must still be
  * a legal play (so a run gives up only an end die). Taking the last die clears
  * the table, and the next player in turn leads a single.
  */
-export function canPickUp(table: TablePlay, dieId: string): boolean {
-    const rest = table.dice.filter(d => d.id !== dieId);
-    return rest.length < table.dice.length && (rest.length === 0 || classifyPlay(rest) !== null);
+export function canPickUp(state: GameState, dieId: string): boolean {
+    const rules = rulesOf(state);
+    if (!rules.pickup || !state.table) return false;
+    const rest = state.table.dice.filter(d => d.id !== dieId);
+    return rest.length < state.table.dice.length && (rest.length === 0 || rules.classifyPlay(rest) !== null);
 }
 
 function applyPickup(state: GameState, playerId: string, dieId: string, rng: Rng): GameState {
     const table = state.table;
+    if (!rulesOf(state).pickup) throw new GameError(`${rulesOf(state).name} has no picking up`);
     if (!table) throw new GameError('There is nothing on the table to pick up');
     const taken = table.dice.find(d => d.id === dieId);
     if (!taken) throw new GameError('That die is not on the table');
-    if (!canPickUp(table, dieId)) throw new GameError('Taking that die would break the play: take an end die');
+    if (!canPickUp(state, dieId)) throw new GameError('Taking that die would break the play: take an end die');
 
     const rest = table.dice.filter(d => d.id !== dieId);
     const rolledDie = roll(taken, rng);
@@ -433,6 +445,7 @@ export function normalizeGame(raw: any): GameState {
     return {
         ...raw,
         gameId: raw.gameId ?? '',
+        rulesetId: getRuleset(raw.rulesetId).id as RulesetId,
         seq: raw.seq ?? 0,
         trick: raw.trick ?? 1,
         seating,

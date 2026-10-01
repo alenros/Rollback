@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 // Load Firebase credentials from .env — these tests talk to the real database.
 dotenv.config();
 
+// PW_BASE_URL points the tests at an already-running dev server on another port.
+const baseURL = process.env.PW_BASE_URL ?? 'http://localhost:4321';
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false, // Run serially to avoid Firebase conflicts
@@ -11,7 +14,7 @@ export default defineConfig({
   retries: 1,
 
   use: {
-    baseURL: 'http://localhost:4321',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -19,7 +22,7 @@ export default defineConfig({
 
   webServer: {
     command: 'pnpm dev', // localhost only: --host would trigger a Windows Firewall prompt
-    url: 'http://localhost:4321',
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },

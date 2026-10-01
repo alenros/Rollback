@@ -2,9 +2,9 @@
  * HTML rendering for the game page. Pure string builders over GameState so the
  * page script only has to re-render on each Firebase snapshot and wire clicks.
  */
-import { COLORS, type Color, type Die, type Sides } from './dice';
-import { canPickUp, ordinal, placePoints, rerollAllowance, standings, type GameState } from './game';
-import { beats, classifyPlay, colorRequired, describePlay } from './plays';
+import { COLORS, type Die, type Sides } from './dice';
+import { canPickUp, ordinal, placePoints, rerollAllowance, rulesOf, standings, type GameState } from './game';
+import { describePlay } from './plays';
 import { escapeHtml } from './session';
 
 export type SortMode = 'color' | 'value';
@@ -13,7 +13,7 @@ export interface ViewState {
     meId: string;
     isHost: boolean;
     selection: Set<string>;
-    /** A table die chosen to pick up (Scout-style), if any. */
+    /** A table die chosen to pick up, if any. */
     tableSelection: string | null;
     sortBy: SortMode;
     /** My dice that were just picked up or rerolled (highlighted until my next move). */
@@ -28,9 +28,6 @@ export interface ViewState {
 export const ROLL_ANIMATION_MS = 700;
 
 const nameOf = (state: GameState, id: string) => escapeHtml(state.names[id] ?? '?');
-
-/** A shape mark per color, so colors stay distinguishable without relying on hue. */
-const GLYPHS: Record<Color, string> = { red: '●', blue: '■', green: '▲', yellow: '◆' };
 
 /**
  * Silhouettes of the polyhedral dice (viewBox 0 0 100 100), with the value centered
@@ -57,7 +54,6 @@ export function dieHtml(die: Die, opts: DieOptions = {}): string {
     const inner = `<svg class="die-shape" viewBox="0 0 100 100" aria-hidden="true">`
         + `<g class="die-outline">${shape.outline}</g>`
         + `<text class="die-value" x="50" y="${shape.valueY}">${die.value}</text></svg>`
-        + `<span class="die-glyph" aria-hidden="true">${GLYPHS[die.color]}</span>`
         + (opts.fresh ? '<span class="die-new" aria-hidden="true">new</span>' : '');
     const cls = ['die', `die-${die.color}`, `die-d${die.sides}`];
     if (opts.selected) cls.push('selected');
@@ -80,7 +76,7 @@ export function renderHeader(state: GameState): string {
     const turn = state.phase === 'playing'
         ? `<span class="turn-name">${nameOf(state, state.turn)}</span>'s turn`
         : state.phase === 'roundOver' ? 'Round over' : 'Game over';
-    return `<div>Round ${state.round} / ${state.totalRounds}</div><div>${turn}</div>`;
+    return `<div>Round ${state.round} / ${state.totalRounds} <span class="ruleset-name">${escapeHtml(rulesOf(state).name)}</span></div><div>${turn}</div>`;
 }
 
 export function renderSeats(state: GameState, view: ViewState): string {
@@ -116,9 +112,10 @@ export function renderTable(state: GameState, view: ViewState): string {
             ? `<p class="hint">${nameOf(state, state.turn)} leads a single die.</p>`
             : '';
     }
-    const play = classifyPlay(state.table.dice)!;
-    // On your turn the table dice are clickable, to pick one up.
-    const selectable = state.phase === 'playing' && state.turn === view.meId;
+    const rules = rulesOf(state);
+    const play = rules.classifyPlay(state.table.dice)!;
+    // On your turn the table dice are clickable, to pick one up (if the ruleset allows it).
+    const selectable = rules.pickup && state.phase === 'playing' && state.turn === view.meId;
     const dice = state.table.dice.map(d => dieHtml(d, { selectable, selected: view.tableSelection === d.id }));
     return `<div class="dice-row">${dice.join('')}</div>
         <p class="table-desc"><strong>${describePlay(play)}</strong> by ${nameOf(state, state.table.playerId)}</p>`;
@@ -146,38 +143,43 @@ export interface Controls {
     canPass: boolean;
     passLabel: string;
     canPickUp: boolean;
+    /** Whether this ruleset has a pick-up action at all. */
+    showPickup: boolean;
 }
 
 export function computeControls(state: GameState, view: ViewState): Controls {
+    const rules = rulesOf(state);
+    const showPickup = rules.pickup;
     const myTurn = state.phase === 'playing' && state.turn === view.meId;
     const hand = state.hands[view.meId] ?? [];
     const selected = hand.filter(d => view.selection.has(d.id));
     const allowance = rerollAllowance(state);
     const passLabel = selected.length ? `Pass & reroll ${selected.length}` : 'Pass';
     const passOk = myTurn && !!state.table && selected.length <= allowance;
-    const pickupOk = myTurn && !!state.table && !!view.tableSelection && canPickUp(state.table, view.tableSelection);
-    const none = { canPlay: false, canPass: false, passLabel, canPickUp: false };
+    const pickupOk = myTurn && !!view.tableSelection && canPickUp(state, view.tableSelection);
+    const none = { canPlay: false, canPass: false, passLabel, canPickUp: false, showPickup };
 
     if (state.phase !== 'playing') return { hint: '', ...none };
     if (!myTurn) return { hint: `Waiting for ${nameOf(state, state.turn)}…`, ...none };
 
-    const tablePlay = state.table ? classifyPlay(state.table.dice)! : null;
+    const tablePlay = state.table ? rules.classifyPlay(state.table.dice)! : null;
     if (view.tableSelection && selected.length === 0) {
         const last = state.table!.dice.length === 1;
         const hint = !pickupOk ? 'Taking that die would break the play: pick up an end die.'
             : last ? 'Pick up the last die: it goes behind your screen, rerolled, the table clears, and the next player leads.'
             : 'Pick up that die: it goes behind your screen, rerolled. Counts as a pass.';
-        return { hint, canPlay: false, canPass: passOk, passLabel, canPickUp: pickupOk };
+        return { hint, canPlay: false, canPass: passOk, passLabel, canPickUp: pickupOk, showPickup };
     }
     if (selected.length === 0) {
-        const colorNote = tablePlay && colorRequired(tablePlay) ? ' (it must be one color)' : '';
+        const colorNote = tablePlay && rules.colorRequired(tablePlay) ? ' (it must be one color)' : '';
+        const pickupNote = rules.pickup ? ', or click a table die to pick it up' : '';
         const hint = tablePlay
-            ? `Select dice that beat <strong>${describePlay(tablePlay)}</strong>${colorNote}, pass and reroll up to ${allowance}, or click a table die to pick it up.`
+            ? `Select dice that beat <strong>${describePlay(tablePlay)}</strong>${colorNote}, or pass and reroll up to ${allowance}${pickupNote}.`
             : 'You lead: select one die to play.';
-        return { hint, canPlay: false, canPass: passOk, passLabel, canPickUp: false };
+        return { hint, canPlay: false, canPass: passOk, passLabel, canPickUp: false, showPickup };
     }
 
-    const play = classifyPlay(selected);
+    const play = rules.classifyPlay(selected);
     let hint: string;
     let canPlay = false;
     if (!play) {
@@ -186,16 +188,16 @@ export function computeControls(state: GameState, view: ViewState): Controls {
         canPlay = play.kind === 'single';
         hint = canPlay ? `Lead <strong>${describePlay(play)}</strong>.` : 'The leader plays one die.';
     } else {
-        canPlay = beats(play, tablePlay);
+        canPlay = rules.beats(play, tablePlay);
         hint = `<strong>${describePlay(play)}</strong> ${canPlay ? 'beats' : 'does not beat'} ${describePlay(tablePlay)}.`;
-        if (!canPlay && play.kind !== 'bomb' && colorRequired(tablePlay) && !play.color) {
+        if (!canPlay && play.kind !== 'bomb' && rules.colorRequired(tablePlay) && !play.color) {
             hint += ' A one-color play must be beaten by a one-color play.';
         }
         if (canPlay && play.kind === 'bomb') hint += ' It clears the table and you take nothing back.';
     }
     if (canPlay && selected.length === hand.length) hint += ' Those are your last dice — you go out!';
     if (tablePlay && selected.length > allowance) hint += ` (Passing rerolls at most ${allowance}.)`;
-    return { hint, canPlay, canPass: passOk, passLabel, canPickUp: pickupOk };
+    return { hint, canPlay, canPass: passOk, passLabel, canPickUp: pickupOk, showPickup };
 }
 
 export function renderRoundPanel(state: GameState, view: ViewState): string {

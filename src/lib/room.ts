@@ -1,6 +1,7 @@
 import type { GameState } from './game';
 import type { GameStatus } from './game-status';
 import type { Player } from './player';
+import type { RulesetId } from './rulesets';
 
 export interface Room {
     code: string;
@@ -9,6 +10,8 @@ export interface Room {
     players: { [playerId: string]: Player };
     createdAt: any;
     hostId: string;
+    /** Chosen by the host in the lobby; copied into the game when it starts. */
+    rulesetId?: RulesetId;
     game?: GameState;
 };
 
