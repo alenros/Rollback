@@ -22,9 +22,15 @@ import Layout from '../components/Layout.astro';
             <section class="panel hand-panel" aria-label="Your screen">
                 <div class="hand-header">
                     <h3>Your screen</h3>
-                    <div class="sort-toggle" role="group" aria-label="Sort dice">
-                        <button type="button" class="chip" data-sort="color">By color</button>
-                        <button type="button" class="chip" data-sort="value">By value</button>
+                    <div class="hand-options">
+                        <div class="chip-group" role="group" aria-label="Die faces">
+                            <button type="button" class="chip" data-faces="pips">Pips</button>
+                            <button type="button" class="chip" data-faces="numbers">Numbers</button>
+                        </div>
+                        <div class="sort-toggle" role="group" aria-label="Sort dice">
+                            <button type="button" class="chip" data-sort="color">By color</button>
+                            <button type="button" class="chip" data-sort="value">By value</button>
+                        </div>
                     </div>
                 </div>
                 <div id="hand"></div>
@@ -207,6 +213,19 @@ import Layout from '../components/Layout.astro';
                 render();
             });
         });
+
+        // Pips vs numbers is pure CSS (both faces are in every die), so switching needs no re-render.
+        const faceButtons = document.querySelectorAll<HTMLButtonElement>('[data-faces]');
+        const showFaces = (faces: string) => {
+            if (faces === 'numbers') document.documentElement.dataset.dieFaces = 'numbers';
+            else delete document.documentElement.dataset.dieFaces;
+            faceButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.faces === faces));
+        };
+        showFaces(document.documentElement.dataset.dieFaces ?? 'pips');
+        faceButtons.forEach(btn => btn.addEventListener('click', () => {
+            showFaces(btn.dataset.faces!);
+            localStorage.setItem('rollbackFaces', btn.dataset.faces!);
+        }));
 
         playBtn.addEventListener('click', () => run(() =>
             sendAction(roomCode, { type: 'play', playerId: view.meId, dieIds: [...view.selection], takeBackId: view.tableSelection ?? undefined })));

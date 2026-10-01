@@ -21,6 +21,10 @@ const baseUrl = import.meta.env.BASE_URL;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href={`${baseUrl}favicon.svg`} />
     <title>{title}</title>
+    <!-- Apply the player's die-face choice (pips or numbers) before first paint; the game page's toggle writes it. -->
+    <script is:inline>
+        try { if (localStorage.getItem('rollbackFaces') === 'numbers') document.documentElement.dataset.dieFaces = 'numbers'; } catch {}
+    </script>
 </head>
 <body>
     <div class="shell">

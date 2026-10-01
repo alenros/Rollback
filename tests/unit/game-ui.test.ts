@@ -21,21 +21,23 @@ describe('dieHtml', () => {
     });
 
     const pipCount = (html: string) => html.split('class="pip"').length - 1;
+    const pipFace = (html: string) => html.slice(html.indexOf('die-face-pips'), html.indexOf('die-face-number'));
+    const numberFace = (html: string) => html.slice(html.indexOf('die-face-number'));
 
     it('shows values up to 9 as that many suit pips, with no numeral', () => {
         for (const value of [1, 6, 7, 8, 9]) {
             const html = dieHtml({ id: 'x', color: 'red', sides: 12, value });
             expect(pipCount(html)).toBe(value);
-            expect(html).not.toContain('class="die-value"');
+            expect(pipFace(html)).not.toContain('<text');
         }
     });
 
     it('shows faces too crowded for pips as a numeral over a single suit index', () => {
         for (const [sides, value] of [[12, 10], [12, 11], [12, 12], [8, 6], [8, 8]] as const) {
-            const html = dieHtml({ id: 'x', color: 'red', sides, value });
-            expect(html).toContain(`>${value}</text>`);
-            expect(pipCount(html)).toBe(0);
-            expect(html).toContain('class="die-index"');
+            const face = pipFace(dieHtml({ id: 'x', color: 'red', sides, value }));
+            expect(face).toContain(`>${value}</text>`);
+            expect(pipCount(face)).toBe(0);
+            expect(face).toContain('class="die-index"');
         }
     });
 
@@ -76,6 +78,14 @@ describe('dieHtml', () => {
                 centers.forEach((a, i) => centers.slice(i + 1).forEach(b =>
                     expect(Math.hypot(a[0] - b[0], a[1] - b[1]), `d${sides} showing ${value}`).toBeGreaterThan(pips.size)));
             }
+        }
+    });
+
+    it('also carries a plain-numeral face, for players who switch pips off', () => {
+        for (const sides of DIE_SIDES) {
+            const face = numberFace(dieHtml({ id: 'x', color: 'green', sides, value: 3 }));
+            expect(face).toContain(`class="die-number" x="50" y="${SHAPES[sides].numberY}">3</text>`);
+            expect(pipCount(face)).toBe(0);
         }
     });
 
