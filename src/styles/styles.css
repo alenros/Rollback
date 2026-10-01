@@ -1,4 +1,5 @@
-/* Rollback: box-art look, "Classic print" palette. Flat paper, ink outlines, hard offset shadows. */
+/* Rollback: box-art look, "Classic print" palette. Flat paper, ink outlines, hard offset shadows.
+   Structure lives in tokens so the trial themes in themes.css can restyle it. */
 :root {
     --paper: #f4ead5;
     --ink: #1b1b1b;
@@ -10,17 +11,36 @@
     --muted: #5f5a50;
     --wash: #efe4cc;
     --rule: #d8ccb2;
+    --on-tomato: #fff;
+    --on-petrol: #fff;
+    --table-hint: #d9ebf2;
+    --title: var(--tomato);
+    --accent-text: var(--tomato);
 
     /* Die colors (gameplay: bombs and color-following). Shape shows the type. */
     --die-red: #e03131;
     --die-blue: #1c7ed6;
     --die-green: #2f9e44;
     --die-yellow: #f2b705;
+    --die-stroke: 6; /* unitless SVG user units: used in calc() with plain numbers */
 
     --display: 'Bowlby One', 'Arial Black', Impact, sans-serif;
     --body: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --display-tracking: 0.5px;
     --line: 3px;
+    --line-thin: 2px;
+    --radius: 0;
+    --radius-sm: 0;
     --shadow: 3px 3px 0 var(--ink);
+    --shadow-sm: 2px 2px 0 var(--ink);
+    --shadow-lg: 6px 6px 0 var(--ink);
+    --shadow-hover: 5px 5px 0 var(--ink);
+    --shadow-turn: 6px 6px 0 var(--tomato);
+    --title-shadow: 3px 3px 0 var(--ink);
+    --title-shadow-lg: 5px 5px 0 var(--ink);
+    --press: translate(3px, 3px);
+    --lift: translate(-2px, -2px);
+    --tilt: -2deg;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,13 +56,13 @@ body {
 }
 
 a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3px; }
-a:hover { color: var(--tomato); }
+a:hover { color: var(--accent-text); }
 
 h1, h2, h3, .label {
     font-family: var(--display);
     font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: var(--display-tracking);
     line-height: 1.1;
 }
 h2 { font-size: 26px; margin-bottom: 14px; }
@@ -70,8 +90,8 @@ h3 { font-size: 15px; margin-bottom: 10px; }
     line-height: 1;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--tomato);
-    text-shadow: 3px 3px 0 var(--ink);
+    color: var(--title);
+    text-shadow: var(--title-shadow);
     text-decoration: none;
 }
 .wordmark:hover { color: var(--tomato-dark); }
@@ -82,7 +102,7 @@ h3 { font-size: 15px; margin-bottom: 10px; }
     margin-top: 16px;
     padding: 10px 14px;
     background: var(--tomato);
-    color: #fff;
+    color: var(--on-tomato);
     border: var(--line) solid var(--ink);
     box-shadow: var(--shadow);
     font-family: var(--display);
@@ -92,7 +112,7 @@ h3 { font-size: 15px; margin-bottom: 10px; }
 
 /* ---------------------------------------------------------------- Parts */
 
-.panel { background: var(--panel); border: var(--line) solid var(--ink); padding: 16px; }
+.panel { background: var(--panel); border: var(--line) solid var(--ink); padding: 16px; border-radius: var(--radius); }
 .narrow { max-width: 480px; margin: 0 auto; }
 
 button {
@@ -100,27 +120,27 @@ button {
     font-size: 15px;
     line-height: 1.1;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: var(--display-tracking);
     color: var(--ink);
     background: var(--panel);
     border: var(--line) solid var(--ink);
-    border-radius: 0;
+    border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 10px 18px;
     cursor: pointer;
     transition: transform 0.08s, box-shadow 0.08s, background 0.12s;
 }
 button:hover:not(:disabled) { background: var(--wash); }
-button:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: none; }
+button:active:not(:disabled) { transform: var(--press); box-shadow: none; }
 button:disabled { opacity: 0.45; box-shadow: none; cursor: not-allowed; }
 button:focus-visible { outline: 3px solid var(--marker); outline-offset: 3px; }
 
-button.primary { background: var(--tomato); color: #fff; }
+button.primary { background: var(--tomato); color: var(--on-tomato); }
 button.primary:hover:not(:disabled) { background: var(--tomato-dark); }
 
 .button-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 
-.chip { font-size: 12px; padding: 5px 10px; box-shadow: 2px 2px 0 var(--ink); }
+.chip { font-size: 12px; padding: 5px 10px; box-shadow: var(--shadow-sm); }
 .chip.active { background: var(--marker); }
 .sort-toggle, .chip-group { display: flex; gap: 8px; }
 .hand-options { display: flex; flex-wrap: wrap; gap: 8px 16px; }
@@ -135,7 +155,7 @@ input, select {
     color: var(--ink);
     background: var(--panel);
     border: var(--line) solid var(--ink);
-    border-radius: 0;
+    border-radius: var(--radius);
 }
 input:focus, select:focus { outline: 3px solid var(--marker); outline-offset: 2px; }
 select:disabled { background: var(--wash); color: var(--ink); opacity: 1; }
@@ -149,13 +169,14 @@ select:disabled { background: var(--wash); color: var(--ink); opacity: 1; }
     padding: 5px 8px;
     background: var(--ink);
     color: var(--paper);
-    transform: rotate(-2deg);
+    transform: rotate(var(--tilt));
+    border-radius: var(--radius-sm);
     white-space: nowrap;
 }
-.tag-marker, .badge-turn, .player-status { background: var(--marker); color: var(--ink); border: 2px solid var(--ink); }
-.badge-out { background: var(--tomato); color: #fff; }
-.badge-passed { background: var(--muted); color: #fff; transform: rotate(1.5deg); }
-.badge-table { background: var(--petrol); color: #fff; transform: rotate(2deg); }
+.tag-marker, .badge-turn, .player-status { background: var(--marker); color: var(--ink); border: var(--line-thin) solid var(--ink); }
+.badge-out { background: var(--tomato); color: var(--on-tomato); }
+.badge-passed { background: var(--muted); color: #fff; transform: rotate(calc(var(--tilt) * -0.75)); }
+.badge-table { background: var(--petrol); color: var(--on-petrol); transform: rotate(calc(var(--tilt) * -1)); }
 
 /* ---------------------------------------------------------------- Dice */
 
@@ -182,7 +203,7 @@ select:disabled { background: var(--wash); color: var(--ink); opacity: 1; }
 
 .die-shape { display: block; width: 100%; height: 100%; overflow: visible; }
 .die-shadow > * { fill: var(--ink); }
-.die-outline > * { fill: var(--die-color); stroke: var(--ink); stroke-width: 6; stroke-linejoin: round; }
+.die-outline > * { fill: var(--die-color); stroke: var(--ink); stroke-width: var(--die-stroke); stroke-linejoin: round; }
 .die-shape text { fill: var(--die-text); font-family: var(--display); text-anchor: middle; dominant-baseline: middle; }
 .die-face { fill: var(--die-text); }
 .die-value { font-size: 30px; }
@@ -195,13 +216,13 @@ select:disabled { background: var(--wash); color: var(--ink); opacity: 1; }
 button.die:hover:not(:disabled) { background: none; transform: translateY(-3px); }
 button.die:active:not(:disabled) { transform: translateY(-1px); }
 button.die:focus-visible { outline: none; }
-button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width: 9; }
+button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width: calc(var(--die-stroke) + 3); }
 
 .die.selected, button.die.selected:hover:not(:disabled) { transform: translateY(-8px); }
 /* Selected: lifted, with a tomato shadow (a marker outline would vanish on yellow dice). */
 .die.selected .die-shadow > * { fill: var(--tomato); }
 .die.selected .die-shadow { transform: translate(9px, 9px); }
-.die.selected .die-outline > * { stroke-width: 8; }
+.die.selected .die-outline > * { stroke-width: calc(var(--die-stroke) + 2); }
 .die.selected::after {
     content: '';
     position: absolute;
@@ -222,7 +243,8 @@ button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width:
     padding: 2px 5px;
     background: var(--marker);
     color: var(--ink);
-    border: 2px solid var(--ink);
+    border: var(--line-thin) solid var(--ink);
+    border-radius: var(--radius-sm);
     transform: rotate(8deg);
 }
 
@@ -243,15 +265,15 @@ button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width:
     font-size: clamp(56px, 13vw, 124px);
     line-height: 0.9;
     letter-spacing: 2px;
-    color: var(--tomato);
-    text-shadow: 5px 5px 0 var(--ink);
+    color: var(--title);
+    text-shadow: var(--title-shadow-lg);
 }
 .cover-tagline { font-size: 20px; max-width: 30ch; margin: 14px auto 22px; }
 .cover-dice { display: flex; justify-content: center; gap: 16px; margin-bottom: 28px; }
 .cover-dice .die { width: 72px; height: 72px; }
 .cover-dice .die:nth-child(odd) { transform: rotate(-9deg); }
 .cover-dice .die:nth-child(even) { transform: rotate(7deg) translateY(8px); }
-.cover-panel { max-width: 480px; margin: 0 auto; text-align: left; box-shadow: 6px 6px 0 var(--ink); }
+.cover-panel { max-width: 480px; margin: 0 auto; text-align: left; box-shadow: var(--shadow-lg); }
 
 .code-input { font-family: var(--display); font-size: 32px; letter-spacing: 8px; text-transform: uppercase; text-align: center; }
 
@@ -263,8 +285,8 @@ button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width:
 .ticket {
     background: var(--marker);
     text-align: center;
-    box-shadow: 6px 6px 0 var(--ink);
-    outline: 2px dashed var(--ink);
+    box-shadow: var(--shadow-lg);
+    outline: var(--line-thin) dashed var(--ink);
     outline-offset: -12px;
     padding: 22px 16px;
 }
@@ -273,7 +295,7 @@ button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width:
 .code-row { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
 .share-btn { font-size: 13px; padding: 7px 12px; }
 
-.player { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 2px dashed var(--ink); }
+.player { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: var(--line-thin) dashed var(--ink); }
 .player:last-child { border-bottom: none; }
 .player-name { font-size: 17px; }
 
@@ -288,14 +310,14 @@ button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width:
 }
 .game-top { grid-area: top; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .game-top-round { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 18px; }
-.turn-tag { font-size: 18px; padding: 8px 12px; transform: rotate(-3deg); }
+.turn-tag { font-size: 18px; padding: 8px 12px; transform: rotate(calc(var(--tilt) * 1.5)); }
 .turn-text { font-size: 18px; }
-.turn-name { color: var(--tomato); }
+.turn-name { color: var(--accent-text); }
 
 .players-panel { grid-area: players; }
-.seat { padding: 8px 10px; border-bottom: 2px dashed var(--ink); }
+.seat { padding: 8px 10px; border-bottom: var(--line-thin) dashed var(--ink); }
 .seat:last-child { border-bottom: none; }
-.seat.is-turn { background: var(--marker); border: 2px solid var(--ink); }
+.seat.is-turn { background: var(--marker); border: var(--line-thin) solid var(--ink); }
 .seat.is-passed, .seat.is-out { color: var(--muted); }
 .seat.is-me .seat-name { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 3px; }
 .seat-name { font-family: var(--display); text-transform: uppercase; font-size: 15px; }
@@ -304,23 +326,23 @@ button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width:
 
 .game-main { grid-area: main; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
-.table-panel { background: var(--petrol); color: #fff; text-align: center; min-height: 170px; box-shadow: 6px 6px 0 var(--ink); }
-.table-panel h3 { color: #fff; text-align: left; }
-.table-panel .hint { color: #d9ebf2; }
+.table-panel { background: var(--petrol); color: var(--on-petrol); text-align: center; min-height: 170px; box-shadow: var(--shadow-lg); }
+.table-panel h3 { color: var(--on-petrol); text-align: left; }
+.table-panel .hint { color: var(--table-hint); }
 .table-desc { font-size: 16px; margin-top: 4px; }
 .table-desc strong { font-family: var(--display); font-weight: 400; text-transform: uppercase; }
 
-.hand-panel { box-shadow: 6px 6px 0 var(--ink); }
-body.my-turn .hand-panel { box-shadow: 6px 6px 0 var(--tomato); }
+.hand-panel { box-shadow: var(--shadow-lg); }
+body.my-turn .hand-panel { box-shadow: var(--shadow-turn); }
 .hand-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .hand-header h3 { margin: 0; }
 .actions { justify-content: center; }
 
-.round-panel { text-align: center; box-shadow: 6px 6px 0 var(--ink); }
+.round-panel { text-align: center; box-shadow: var(--shadow-lg); }
 .round-results { list-style: none; max-width: 320px; margin: 0 auto 14px; }
-.round-results li { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 2px dashed var(--ink); }
+.round-results li { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: var(--line-thin) dashed var(--ink); }
 .standings { margin: 0 auto; border-collapse: collapse; min-width: 280px; }
-.standings th, .standings td { padding: 6px 10px; border-bottom: 2px solid var(--ink); text-align: left; }
+.standings th, .standings td { padding: 6px 10px; border-bottom: var(--line-thin) solid var(--ink); text-align: left; }
 .standings th { font-family: var(--display); font-weight: 400; text-transform: uppercase; font-size: 13px; }
 
 .log-panel { grid-area: log; }
@@ -338,16 +360,17 @@ body.my-turn .hand-panel { box-shadow: 6px 6px 0 var(--tomato); }
     border: var(--line) solid var(--ink);
     box-shadow: var(--shadow);
     padding: 14px 16px;
+    border-radius: var(--radius);
     margin: 16px 0;
     color: var(--ink);
     text-decoration: none;
     transition: transform 0.08s, box-shadow 0.08s;
 }
-.ruleset-card:hover { color: var(--ink); transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--ink); }
-.ruleset-card strong { display: block; font-family: var(--display); font-weight: 400; text-transform: uppercase; font-size: 20px; color: var(--tomato); margin-bottom: 4px; }
+.ruleset-card:hover { color: var(--ink); transform: var(--lift); box-shadow: var(--shadow-hover); }
+.ruleset-card strong { display: block; font-family: var(--display); font-weight: 400; text-transform: uppercase; font-size: 20px; color: var(--accent-text); margin-bottom: 4px; }
 
-.rules { max-width: 760px; margin: 0 auto; background: var(--panel); border: var(--line) solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: 24px 28px; }
-.rules h1 { font-size: 34px; color: var(--tomato); text-shadow: 3px 3px 0 var(--ink); margin: 8px 0 12px; }
+.rules { max-width: 760px; margin: 0 auto; background: var(--panel); border: var(--line) solid var(--ink); box-shadow: var(--shadow-lg); padding: 24px 28px; border-radius: var(--radius); }
+.rules h1 { font-size: 34px; color: var(--title); text-shadow: var(--title-shadow); margin: 8px 0 12px; }
 .rules h2 { font-size: 22px; border-bottom: var(--line) solid var(--ink); padding-bottom: 4px; margin: 28px 0 12px; }
 .rules h3 { font-size: 16px; margin: 18px 0 8px; }
 .rules p, .rules li { margin: 8px 0; }
@@ -355,7 +378,7 @@ body.my-turn .hand-panel { box-shadow: 6px 6px 0 var(--tomato); }
 .rules li::marker { color: var(--tomato); }
 .rules em { color: var(--muted); }
 .rules table { border-collapse: collapse; border: var(--line) solid var(--ink); margin: 12px 0; }
-.rules th, .rules td { border: 2px solid var(--ink); padding: 6px 12px; }
+.rules th, .rules td { border: var(--line-thin) solid var(--ink); padding: 6px 12px; }
 .rules th { background: var(--marker); font-family: var(--display); font-weight: 400; text-transform: uppercase; font-size: 13px; }
 
 /* ---------------------------------------------------------------- Narrow screens */
@@ -371,8 +394,8 @@ body.my-turn .hand-panel { box-shadow: 6px 6px 0 var(--tomato); }
 @media (max-width: 700px) {
     .game { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "players" "main" "log"; }
     .seats { display: flex; flex-wrap: wrap; gap: 8px; }
-    .seat { flex: 1 1 140px; border: 2px solid var(--ink); }
-    .seat:last-child { border-bottom: 2px solid var(--ink); }
+    .seat { flex: 1 1 140px; border: var(--line-thin) solid var(--ink); }
+    .seat:last-child { border-bottom: var(--line-thin) solid var(--ink); }
     .table-panel { min-height: 120px; }
 }
 

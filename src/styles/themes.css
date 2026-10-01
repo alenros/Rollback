@@ -1,0 +1,769 @@
+/* Trial themes. Everything here goes away once one look is chosen; the winner's tokens move into styles.css. */
+
+/* ---------------------------------------------------------------- Switcher */
+
+.theme-switcher {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: calc(100vw - 24px);
+    gap: 6px;
+    padding: 6px 8px;
+    background: var(--panel);
+    border: var(--line-thin) solid var(--ink);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+.theme-switcher-label { font-family: var(--display); text-transform: uppercase; font-size: 11px; color: var(--muted); }
+.theme-switcher .chip { padding: 4px 8px; font-size: 11px; }
+.theme-switcher .chip[aria-pressed="true"] { background: var(--marker); }
+@media print { .theme-switcher { display: none; } }
+
+/* ---------------------------------------------------------------- B: harmonies-bold
+   Box-art structure, Harmonies palette: night-ink lines, sunlit paper, marigold + teal accents. */
+
+html[data-theme="harmonies-bold"] {
+    --paper: #f6e7a6;
+    --ink: #223749;
+    --panel: #fbf3d6;
+    --tomato: #e08a3c;
+    --tomato-dark: #e99a52;
+    --petrol: #2e7394;
+    --marker: #f3cc5d;
+    --muted: #5e5a52;
+    --wash: #f3e5b4;
+    --rule: #dcc98e;
+    --on-tomato: #223749;
+    --on-petrol: #fbf3d6;
+    --table-hint: #e6f2f2;
+    --title: #b05c1a;
+    --accent-text: #a14a14;
+
+    --die-red: #e0603f;
+    --die-blue: #5a63a9;
+    --die-green: #4f8a4a;
+    --die-yellow: #f2c84b;
+
+    --shadow-lg: 6px 6px 0 var(--petrol);
+}
+
+/* Marker yellow vanishes on cream; focus rings use teal. */
+html[data-theme="harmonies-bold"] :is(button:focus-visible, input:focus, select:focus) { outline-color: var(--petrol); }
+
+/* Night ink fails on darker marigold, so --tomato-dark is a lighter orange here; the wordmark hovers to rust. */
+html[data-theme="harmonies-bold"] .wordmark:hover { color: var(--accent-text); }
+
+/* ---------------------------------------------------------------- Cuphead B: cuphead-inkwell
+   Classic 1930s rubber-hose cartoon: sepia film stock with grain and a vignette, chunky brown-black ink,
+   rounded corners, pill buttons, a red Rye title card with an ink-and-gold drop shadow, poker-chip dice.
+   Grain and vignette sit behind the content, so panels stay flat and clean. */
+
+html[data-theme="cuphead-inkwell"] {
+    --paper: #efe2c2;
+    --ink: #1a120c;
+    --panel: #f7eedb;
+    --tomato: #d1281f;
+    --tomato-dark: #a91d16;
+    --petrol: #267865;
+    --marker: #c99a3c;
+    --muted: #5c4632;
+    --wash: #ecdcb6;
+    --rule: #dac7a0;
+    --on-tomato: #fff6e3;
+    --on-petrol: #fff6e3;
+    --table-hint: #eef5ef;
+    --title: #d1281f;
+    --accent-text: #a81c15;
+
+    --die-red: #e12125;
+    --die-blue: #2f56b0;
+    --die-green: #2b8539; /* a shade under #2f8f3e so white numerals reach 4.5:1 */
+    --die-yellow: #f2c230;
+    --die-stroke: 7;
+
+    --display: 'Alfa Slab One', 'Rockwell Extra Bold', 'Arial Black', serif;
+    --body: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --display-tracking: 0.6px;
+    --line: 4px;
+    --line-thin: 2.5px;
+    --radius: 14px;
+    --radius-sm: 999px;
+    --shadow: 3px 4px 0 var(--ink);
+    --shadow-sm: 2px 3px 0 var(--ink);
+    --shadow-lg: 5px 6px 0 var(--ink);
+    --shadow-hover: 6px 7px 0 var(--ink);
+    --shadow-turn: 6px 7px 0 var(--tomato);
+    --title-shadow: 2px 2px 0 var(--ink), 4px 4px 0 var(--marker);
+    --title-shadow-lg: 4px 4px 0 var(--ink), 8px 8px 0 var(--marker);
+    --press: translate(3px, 4px);
+    --lift: translate(-2px, -2px);
+    --tilt: -3deg;
+}
+
+/* Film grain on the page, and a burnt-film vignette at the viewport edges, behind the content (isolation keeps it above
+   the page). The side burn stops where the content column starts, and the top and bottom bands are thin, so text sitting
+   on the paper is never darkened; panels are opaque anyway. */
+html[data-theme="cuphead-inkwell"] body {
+    isolation: isolate;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .25 0 0 0 0 .16 0 0 0 0 .08 0 0 0 1.1 -.42'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+        var(--paper);
+}
+html[data-theme="cuphead-inkwell"] body::before {
+    --burn: max(10px, calc(50% - 550px));
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, rgba(40, 22, 8, 0.55), rgba(58, 32, 12, 0.18) calc(var(--burn) * 0.55), transparent var(--burn),
+            transparent calc(100% - var(--burn)), rgba(58, 32, 12, 0.18) calc(100% - var(--burn) * 0.55), rgba(40, 22, 8, 0.55)),
+        linear-gradient(180deg, rgba(40, 22, 8, 0.45), transparent 12px, transparent calc(100% - 12px), rgba(40, 22, 8, 0.45));
+}
+
+/* Title card: western Rye in devil red over an ink-then-gold double drop shadow. */
+html[data-theme="cuphead-inkwell"] :where(.wordmark, .cover-title, .rules h1) {
+    font-family: 'Rye', 'Alfa Slab One', serif;
+    font-weight: 400;
+}
+html[data-theme="cuphead-inkwell"] .wordmark { letter-spacing: 1.5px; }
+html[data-theme="cuphead-inkwell"] .cover-title {
+    display: inline-block;
+    font-size: clamp(42px, 12vw, 116px);
+    letter-spacing: 3px;
+    padding: 0.18em 0.42em 0.14em;
+    background: var(--panel);
+    border: 9px double var(--ink);
+    border-radius: 22px;
+    box-shadow: var(--shadow-lg);
+}
+@media (max-width: 600px) {
+    html[data-theme="cuphead-inkwell"] .cover-title { text-shadow: 2px 3px 0 var(--ink), 4px 5px 0 var(--marker); border-width: 7px; }
+}
+html[data-theme="cuphead-inkwell"] .cover-tagline { font-style: italic; }
+html[data-theme="cuphead-inkwell"] .topbar { border-bottom: 8px double var(--ink); }
+html[data-theme="cuphead-inkwell"] .rules h2 { border-bottom-style: double; border-bottom-width: 7px; }
+
+/* Bubbly pill buttons (dice are buttons too, but borderless). */
+html[data-theme="cuphead-inkwell"] button:not(.die) { border-radius: 999px; }
+/* The switcher wraps to two rows on phones, where a full pill turns into an oval. */
+html[data-theme="cuphead-inkwell"] .theme-switcher { border-radius: 24px; }
+
+/* Gold vanishes on sepia; focus rings and the focused-die outline use vest teal. */
+html[data-theme="cuphead-inkwell"] :where(button:focus-visible, input:focus, select:focus) { outline-color: var(--petrol); }
+html[data-theme="cuphead-inkwell"] button.die:focus-visible .die-outline > * { stroke: var(--petrol); }
+
+/* A selected die's underline gets rounded ends. */
+html[data-theme="cuphead-inkwell"] .die.selected::after { border-radius: 999px; height: 6px; }
+
+/* Bordered boxes the radius tokens don't reach. */
+html[data-theme="cuphead-inkwell"] #message-area.visible { border-radius: var(--radius); }
+html[data-theme="cuphead-inkwell"] .seat.is-turn { border-radius: 10px; }
+@media (max-width: 700px) {
+    html[data-theme="cuphead-inkwell"] .seat { border-radius: 10px; }
+}
+/* Collapsed borders can't be rounded, so draw the grid with separate borders on two sides of each cell. */
+html[data-theme="cuphead-inkwell"] .rules table { border-collapse: separate; border-spacing: 0; border-radius: var(--radius); overflow: hidden; }
+html[data-theme="cuphead-inkwell"] .rules :is(th, td) { border-width: 0 var(--line-thin) var(--line-thin) 0; }
+html[data-theme="cuphead-inkwell"] .rules tr > :last-child { border-right-width: 0; }
+html[data-theme="cuphead-inkwell"] .rules tbody tr:last-child > * { border-bottom-width: 0; }
+
+/* ---------------------------------------------------------------- Cuphead C: cuphead-cardtable
+   Hell of a Deal card table: a hellfire-black casino page with an oxblood glow, film grain and red-and-gold art-deco
+   trim (a double rule under the top bar, lattice pillars on wide screens, a lattice band along the foot of the page),
+   a gold-foil Rye title, and panels that are cream playing cards with a gold rim and a suit pip. The page is dark, so
+   body text is cream and panels restore dark ink; --ink stays dark because it is also every outline and die stroke. */
+
+html[data-theme="cuphead-cardtable"] {
+    --paper: #140c19;
+    --ink: #1a120c;
+    --panel: #f5ead2;
+    --tomato: #e12125;
+    --tomato-dark: #b8181c;
+    --petrol: #1f5a3a;
+    --marker: #e9ce80;
+    --muted: #5c4632;
+    --wash: #ecdcb6;
+    --rule: #d9c7a0;
+    --on-tomato: #fffaf0;
+    --on-petrol: #f3e6c8;
+    --table-hint: #cfe3cf;
+    --title: #e9ce80;
+    --accent-text: #831e20;
+
+    /* Card-table extras. */
+    --cream: #f3e6c8;
+    --cream-muted: #c9b48e;
+    --gold: #bd9a43;
+    --oxblood: #831e20;
+    --felt: #23663f;
+
+    --die-red: #e12125;
+    --die-blue: #2f56b0;
+    --die-green: #2b8539;
+    --die-yellow: #f2c230;
+    --die-stroke: 6;
+
+    --display: 'Alfa Slab One', 'Rockwell Extra Bold', 'Arial Black', serif;
+    --body: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --display-tracking: 0.5px;
+    --line: 2px;
+    --line-thin: 2px;
+    --radius: 10px;
+    --radius-sm: 4px;
+    --shadow: 0 3px 0 var(--ink);
+    --shadow-sm: 0 2px 0 var(--ink);
+    /* Every card: a gold rim outside the ink border, then a soft drop onto the table. */
+    --shadow-lg: 0 0 0 3px var(--gold), 0 10px 24px rgba(0, 0, 0, 0.55);
+    --shadow-hover: 0 0 0 3px var(--marker), 0 14px 30px rgba(0, 0, 0, 0.6);
+    --shadow-turn: 0 0 0 3px var(--tomato), 0 0 0 6px var(--marker), 0 0 30px rgba(225, 33, 37, 0.55);
+    --title-shadow: 0 2px 0 var(--oxblood), 0 4px 0 #000;
+    --title-shadow-lg: 0 4px 0 var(--oxblood), 0 8px 0 #000;
+    --press: translateY(3px);
+    --lift: translateY(-3px);
+    --tilt: -2deg;
+}
+
+/* The casino floor: an oxblood glow at the top over hellfire black, with pale film grain. Decorations hang off body
+   pseudo-elements behind the content (isolation keeps them above the page background). */
+html[data-theme="cuphead-cardtable"] body {
+    position: relative;
+    isolation: isolate;
+    color: var(--cream);
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .95 0 0 0 0 .88 0 0 0 0 .74 0 0 0 .5 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+        radial-gradient(ellipse 85% 620px at 50% 0, #3a1420, rgba(58, 20, 32, 0.45) 55%, transparent 100%),
+        var(--paper);
+}
+/* Cover pillars: red-framed gold lattice down both sides, only where the margin outside the content column is wide. */
+html[data-theme="cuphead-cardtable"] body::before {
+    --pillar: clamp(0px, calc(50% - 590px), 64px);
+    --frame: linear-gradient(90deg, transparent 8px, #e12125 8px 11px, transparent 11px calc(100% - 11px), #e12125 calc(100% - 11px) calc(100% - 8px), transparent calc(100% - 8px));
+    --lattice-a: repeating-linear-gradient(45deg, transparent 0 10px, rgba(189, 154, 67, 0.55) 10px 11.5px);
+    --lattice-b: repeating-linear-gradient(-45deg, transparent 0 10px, rgba(189, 154, 67, 0.55) 10px 11.5px);
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        var(--frame) left top / var(--pillar) 100% no-repeat,
+        var(--frame) right top / var(--pillar) 100% no-repeat,
+        var(--lattice-a) 14px 0 / calc(var(--pillar) - 28px) 100% no-repeat,
+        var(--lattice-b) 14px 0 / calc(var(--pillar) - 28px) 100% no-repeat,
+        var(--lattice-a) right 14px top 0 / calc(var(--pillar) - 28px) 100% no-repeat,
+        var(--lattice-b) right 14px top 0 / calc(var(--pillar) - 28px) 100% no-repeat;
+}
+@media (max-width: 1259px) {
+    html[data-theme="cuphead-cardtable"] body::before { display: none; }
+}
+/* The foot of the page: a red rule over a gold diamond lattice, inside the shell's bottom padding (never under text). */
+html[data-theme="cuphead-cardtable"] body::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 30px;
+    z-index: -1;
+    pointer-events: none;
+    border-top: 3px solid var(--tomato);
+    box-shadow: 0 -5px 0 -2px var(--gold);
+    background:
+        repeating-linear-gradient(45deg, transparent 0 9px, rgba(189, 154, 67, 0.6) 9px 10.5px),
+        repeating-linear-gradient(-45deg, transparent 0 9px, rgba(189, 154, 67, 0.6) 9px 10.5px),
+        #1d0f18;
+}
+
+/* Gold-foil Rye title over an oxblood-then-black drop; the gradient fill only where background-clip: text works. */
+html[data-theme="cuphead-cardtable"] :where(.wordmark, .cover-title, .rules h1) {
+    font-family: 'Rye', 'Alfa Slab One', serif;
+    font-weight: 400;
+}
+html[data-theme="cuphead-cardtable"] .wordmark { letter-spacing: 1.5px; }
+html[data-theme="cuphead-cardtable"] .wordmark:hover { color: #f6e3a1; }
+html[data-theme="cuphead-cardtable"] .cover-title { font-size: clamp(46px, 12.5vw, 118px); letter-spacing: 3px; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    html[data-theme="cuphead-cardtable"] :where(.wordmark, .cover-title) {
+        background: linear-gradient(180deg, #f8e8ae 8%, #e9ce80 42%, #bd9a43 72%, #9a7834 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: none;
+    }
+    html[data-theme="cuphead-cardtable"] .wordmark { filter: drop-shadow(0 2px 0 #831e20) drop-shadow(0 2px 0 #000); }
+    html[data-theme="cuphead-cardtable"] .wordmark:hover { filter: drop-shadow(0 2px 0 #e12125) drop-shadow(0 2px 0 #000); }
+    html[data-theme="cuphead-cardtable"] .cover-title { filter: drop-shadow(0 4px 0 #831e20) drop-shadow(0 4px 0 #000); }
+}
+/* A suit row over the cover title and a Limelight strap line under it. */
+html[data-theme="cuphead-cardtable"] .cover::before {
+    content: '\2663  \25C6  \2660  \25C6  \2665  \25C6  \2666';
+    display: block;
+    white-space: pre;
+    margin-bottom: 6px;
+    font-size: 18px;
+    letter-spacing: 4px;
+    color: var(--gold);
+}
+html[data-theme="cuphead-cardtable"] .cover-tagline::before {
+    content: '\2605  A Hell of a Roll  \2605';
+    display: block;
+    white-space: pre;
+    margin-bottom: 10px;
+    font-family: 'Limelight', 'Rye', serif;
+    font-size: 15px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #ff5148;
+}
+html[data-theme="cuphead-cardtable"] .cover-tagline { color: var(--cream); }
+
+/* Top bar: a red rule with a gold line under it and a red diamond in the middle; tags in the slot stay black-and-gold. */
+html[data-theme="cuphead-cardtable"] .topbar {
+    position: relative;
+    border-bottom: 3px solid var(--tomato);
+    box-shadow: 0 3px 0 var(--paper), 0 5px 0 var(--gold);
+    margin-bottom: 30px;
+}
+html[data-theme="cuphead-cardtable"] .topbar::after {
+    content: '\2666';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, 50%);
+    font-size: 26px;
+    line-height: 1;
+    color: var(--marker);
+    text-shadow: -2px 0 0 var(--tomato), 2px 0 0 var(--tomato);
+}
+
+/* Cards: cream panels with dark ink text, an ink border, a gold rim and a drop shadow. */
+html[data-theme="cuphead-cardtable"] :where(.panel, .rules, .ruleset-card, .theme-switcher) { color: var(--ink); }
+html[data-theme="cuphead-cardtable"] .panel { position: relative; box-shadow: var(--shadow-lg); }
+html[data-theme="cuphead-cardtable"] body.my-turn .hand-panel { box-shadow: var(--shadow-turn); }
+html[data-theme="cuphead-cardtable"] :where(.panel, .rules) :where(h2, h3) { color: var(--oxblood); }
+html[data-theme="cuphead-cardtable"] .ruleset-card { position: relative; box-shadow: var(--shadow-lg); }
+html[data-theme="cuphead-cardtable"] .ruleset-card:hover { box-shadow: var(--shadow-hover); }
+
+/* A suit pip in each card's top-right corner (black suits in ink, red suits in red). Not on the hand panel, whose
+   header carries the sort chips on the right. */
+html[data-theme="cuphead-cardtable"] :where(.panel, .ruleset-card)::before {
+    content: '\2660';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--ink);
+    pointer-events: none;
+}
+/* The ticket's dashed outline sits 12px in, so its pip moves inside it. */
+html[data-theme="cuphead-cardtable"] .ticket::before { top: 19px; right: 22px; }
+html[data-theme="cuphead-cardtable"] :where(.players-panel, .players-list)::before { content: '\2663'; }
+html[data-theme="cuphead-cardtable"] :where(.log-panel, .ticket, .round-panel)::before { content: '\2665'; color: var(--tomato); }
+html[data-theme="cuphead-cardtable"] :where(.ruleset-card:nth-of-type(odd))::before { content: '\2666'; color: var(--tomato); }
+html[data-theme="cuphead-cardtable"] .table-panel::before { content: '\2666'; color: var(--marker); }
+html[data-theme="cuphead-cardtable"] .hand-panel::before { content: none; }
+
+/* Things that sit straight on the dark page: light text, gold accents. */
+html[data-theme="cuphead-cardtable"] .rules-index > h2 { color: var(--marker); }
+html[data-theme="cuphead-cardtable"] .rules-index > .hint { color: var(--cream-muted); }
+html[data-theme="cuphead-cardtable"] .turn-name { color: var(--marker); }
+
+/* Green felt card table with a gold rim and a thin inset gold line. */
+html[data-theme="cuphead-cardtable"] .table-panel {
+    color: var(--on-petrol);
+    background: radial-gradient(ellipse at 50% 35%, var(--felt), var(--petrol) 75%);
+    box-shadow: inset 0 0 0 7px var(--petrol), inset 0 0 0 8.5px rgba(233, 206, 128, 0.55), var(--shadow-lg);
+}
+html[data-theme="cuphead-cardtable"] .table-panel h3 { color: #f2dc98; } /* a lighter foil: 5.1:1 on the felt */
+html[data-theme="cuphead-cardtable"] .table-panel .hint { color: var(--table-hint); }
+
+/* Oswald casino buttons: devil-red primary over an oxblood step, cream secondary with an ink step. */
+html[data-theme="cuphead-cardtable"] button:not(.die) {
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border-radius: 6px;
+}
+html[data-theme="cuphead-cardtable"] button.primary { box-shadow: 0 3px 0 var(--oxblood); }
+html[data-theme="cuphead-cardtable"] input:not(:disabled) { background: #fffaf0; }
+html[data-theme="cuphead-cardtable"] select:not(:disabled) { background-color: #fffaf0; }
+
+/* Focus: devil red reads on the cream cards and the switcher (gold would vanish on cream). Dice keep their ink stroke
+   and get a red ring instead, since a red outline would vanish on red dice. */
+html[data-theme="cuphead-cardtable"] :where(button:focus-visible, input:focus, select:focus) { outline-color: var(--tomato); }
+html[data-theme="cuphead-cardtable"] button.die:focus-visible { outline: 3px solid var(--tomato); outline-offset: 4px; border-radius: 10px; }
+html[data-theme="cuphead-cardtable"] button.die:focus-visible .die-outline > * { stroke: var(--ink); }
+html[data-theme="cuphead-cardtable"] :where(.wordmark, .topbar a.tag):focus-visible { outline: 3px solid var(--marker); outline-offset: 4px; }
+
+/* Tags and badges: black chips with gold lettering; the turn sticker and host chip are gold with ink. */
+html[data-theme="cuphead-cardtable"] :where(.tag, .badge, .player-status) {
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 13px;
+}
+html[data-theme="cuphead-cardtable"] :where(.tag, .badge) { background: var(--paper); color: var(--marker); border: 1.5px solid var(--gold); }
+html[data-theme="cuphead-cardtable"] :where(.tag-marker, .badge-turn, .player-status) { background: var(--marker); color: var(--ink); border: var(--line-thin) solid var(--ink); }
+html[data-theme="cuphead-cardtable"] .turn-tag { font-size: 18px; box-shadow: 0 0 0 2px var(--tomato), 0 4px 14px rgba(225, 33, 37, 0.45); }
+html[data-theme="cuphead-cardtable"] .badge-out { background: var(--tomato); color: var(--on-tomato); border-color: var(--ink); }
+html[data-theme="cuphead-cardtable"] .badge-passed { background: var(--muted); color: var(--panel); border-color: var(--ink); }
+html[data-theme="cuphead-cardtable"] .badge-table { background: var(--petrol); color: var(--on-petrol); border-color: var(--gold); }
+
+/* The current seat is a gold card; the message strip is a red card with a gold rim. */
+html[data-theme="cuphead-cardtable"] .seat.is-turn { border-radius: 8px; }
+@media (max-width: 700px) {
+    html[data-theme="cuphead-cardtable"] .seat { border-radius: 8px; }
+}
+html[data-theme="cuphead-cardtable"] #message-area.visible {
+    border-radius: var(--radius);
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 15px;
+    box-shadow: 0 0 0 3px var(--gold), 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Rulebook: the title is printed on the card, so it goes devil red with a gold step instead of gold foil. */
+html[data-theme="cuphead-cardtable"] .rules h1 { color: var(--tomato); text-shadow: 2px 2px 0 var(--gold); letter-spacing: 1px; }
+html[data-theme="cuphead-cardtable"] .rules h2 { border-bottom: 3px double var(--tomato); }
+html[data-theme="cuphead-cardtable"] .rules a:hover { color: var(--tomato-dark); }
+/* Collapsed borders can't be rounded, so draw the grid with separate borders on two sides of each cell. */
+html[data-theme="cuphead-cardtable"] .rules table { border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; }
+html[data-theme="cuphead-cardtable"] .rules :is(th, td) { border-width: 0 var(--line-thin) var(--line-thin) 0; }
+html[data-theme="cuphead-cardtable"] .rules tr > :last-child { border-right-width: 0; }
+html[data-theme="cuphead-cardtable"] .rules tbody tr:last-child > * { border-bottom-width: 0; }
+
+/* A selected die's underline gets rounded ends; the switcher pill gets a gold rim so it reads on the dark page. */
+html[data-theme="cuphead-cardtable"] .die.selected::after { border-radius: 999px; height: 6px; }
+html[data-theme="cuphead-cardtable"] .theme-switcher { border-radius: 8px; box-shadow: 0 0 0 2px var(--gold), 0 6px 16px rgba(0, 0, 0, 0.5); }
+
+/* ---------------------------------------------------------------- Cuphead A: cuphead-casino
+   Hell of a Deal box cover, full dark: a near-black plum page with film grain inside a red art-deco frame with a thin
+   gold inner rule and red diamonds, red rails with a gold diamond chain on wide screens, and hellfire licking up the
+   foot of the page (in the shell's bottom padding, never under text). Gold-foil Rye title over oxblood, dark velvet
+   panels with a gold border and an oxblood ring, Limelight headings, Oswald casino buttons, green felt table, poker-chip
+   dice. --ink stays near-black because it is every outline, die stroke and button edge, so text on the dark page and
+   panels is set to cream explicitly; --paper is the page, --panel the velvet (also secondary buttons). */
+
+html[data-theme="cuphead-casino"] {
+    color-scheme: dark;
+    --paper: #140c19;
+    --ink: #0c0613;
+    --panel: #22131f;
+    --tomato: #e12125;
+    --tomato-dark: #b8181c;
+    --petrol: #154a2f;
+    --marker: #e9ce80;
+    --muted: #c9b48e;
+    --wash: #3a2233;
+    --rule: rgba(189, 154, 67, 0.32);
+    --on-tomato: #fffaf0;
+    --on-petrol: #f3e6c8;
+    --table-hint: #cfe3cf;
+    --title: #e9ce80;
+    --accent-text: #ff5148;
+
+    /* Casino extras. */
+    --cream: #f3e6c8;
+    --gold: #bd9a43;
+    --foil: #e9ce80;
+    --oxblood: #831e20;
+    --well: #140c19;
+    --felt: #22663f;
+    --gold-rule: rgba(189, 154, 67, 0.62); /* 3.2:1 on the velvet */
+
+    --die-red: #e12125;
+    --die-blue: #2f56b0;
+    --die-green: #2b8539;
+    --die-yellow: #f2c230;
+    --die-stroke: 6;
+
+    --display: 'Alfa Slab One', 'Rockwell Extra Bold', 'Arial Black', serif;
+    --body: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --display-tracking: 0.5px;
+    --line: 2px;
+    --line-thin: 2px;
+    --radius: 4px;
+    --radius-sm: 2px;
+    --shadow: 0 3px 0 var(--oxblood);
+    --shadow-sm: 0 2px 0 var(--oxblood);
+    /* Every panel: a black gap, then an oxblood ring, then a soft drop. */
+    --shadow-lg: 0 0 0 4px var(--paper), 0 0 0 5px var(--oxblood), 0 12px 28px rgba(0, 0, 0, 0.6);
+    --shadow-hover: 0 0 0 4px var(--paper), 0 0 0 6px var(--tomato), 0 14px 30px rgba(0, 0, 0, 0.65);
+    --shadow-turn: 0 0 0 4px var(--paper), 0 0 0 7px var(--tomato), 0 0 34px rgba(255, 90, 31, 0.5);
+    --title-shadow: 2px 2px 0 var(--oxblood), 3px 3px 0 #000;
+    --title-shadow-lg: 4px 4px 0 var(--oxblood), 6px 6px 0 #000;
+    --press: translateY(3px);
+    --lift: translateY(-3px);
+    --tilt: -2deg;
+}
+
+/* The page: plum black with pale film grain. Decorations hang off body pseudo-elements behind the content
+   (isolation keeps them above the page background); the shell gets a deeper foot so the fire has room. */
+html[data-theme="cuphead-casino"] body {
+    position: relative;
+    isolation: isolate;
+    color: var(--cream);
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .95 0 0 0 0 .88 0 0 0 0 .74 0 0 0 .45 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+        var(--paper);
+}
+html[data-theme="cuphead-casino"] .shell { padding-bottom: 120px; }
+
+/* The frame: a red rule with a thin gold rule inside it. Thin on narrow screens (it stays inside the 16px gutter), the
+   full cover frame where the margins are wide; there, red rails with a gold diamond chain run down both sides. */
+html[data-theme="cuphead-casino"] body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 6px var(--tomato), inset 0 0 0 9px var(--paper), inset 0 0 0 10px var(--gold);
+}
+@media (min-width: 1180px) {
+    html[data-theme="cuphead-casino"] body::before {
+        box-shadow: inset 0 0 0 10px var(--paper), inset 0 0 0 13px var(--tomato), inset 0 0 0 19px var(--paper), inset 0 0 0 21px var(--gold);
+    }
+}
+@media (min-width: 1276px) {
+    html[data-theme="cuphead-casino"] body::before {
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='40' viewBox='0 0 48 40'%3E%3Cpath fill='%23e12125' d='M0 0h3v40H0zM45 0h3v40h-3z'/%3E%3Cpath fill='none' stroke='%23bd9a43' stroke-width='1.5' d='M24 1L42 20L24 39L6 20Z'/%3E%3Cpath fill='%23e12125' d='M24 14L30 20L24 26L18 20Z'/%3E%3C/svg%3E") left 30px top 0 / 48px 40px repeat-y, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='40' viewBox='0 0 48 40'%3E%3Cpath fill='%23e12125' d='M0 0h3v40H0zM45 0h3v40h-3z'/%3E%3Cpath fill='none' stroke='%23bd9a43' stroke-width='1.5' d='M24 1L42 20L24 39L6 20Z'/%3E%3Cpath fill='%23e12125' d='M24 14L30 20L24 26L18 20Z'/%3E%3C/svg%3E") right 30px top 0 / 48px 40px repeat-y;
+    }
+}
+/* Red-and-gold diamonds where the frame crosses the top and bottom centre: a second fixed layer, since the frame's
+   inset shadows would paint over its own background. */
+html[data-theme="cuphead-casino"] .shell::before {
+    --diamond: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Crect x='5' width='30' height='24' fill='%23140c19'/%3E%3Cpath fill='%23e12125' d='M20 1L31 12L20 23L9 12Z'/%3E%3Cpath fill='%23e9ce80' d='M20 7L25 12L20 17L15 12Z'/%3E%3C/svg%3E");
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--diamond) center top / 22px 13px no-repeat, var(--diamond) center bottom / 22px 13px no-repeat;
+}
+@media (min-width: 1180px) {
+    html[data-theme="cuphead-casino"] .shell::before { background-size: 40px 24px; background-position: center top 0, center bottom 0; }
+}
+/* Hellfire along the foot of the page: cartoon flame tongues over a red glow, inside the shell's bottom padding.
+   It sits under the frame (z-index -2) so the frame reads as being in front of the fire, like the cover. */
+html[data-theme="cuphead-casino"] body::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 104px;
+    z-index: -2;
+    pointer-events: none;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='100' viewBox='0 0 320 100' overflow='hidden'%3E%3Cpath fill='%23e12125' d='M-9 100C-11 69 12 63 5 42C2 33 7 29 5 26C29 47 46 67 45 100ZM311 100C309 69 332 63 325 42C322 33 327 29 325 26C349 47 366 67 365 100ZM39 100C38 64 63 57 58 33C58 22 63 18 62 14C83 38 99 61 98 100ZM103 100C102 70 121 64 123 44C127 35 132 32 132 28C140 48 150 68 149 100ZM154 100C152 59 175 52 169 25C167 13 171 8 170 3C192 30 209 57 208 100ZM210 100C209 59 228 51 222 24C221 12 225 8 224 3C242 30 256 56 254 100ZM258 100C257 69 278 63 273 43C272 34 276 30 276 27C294 47 308 67 307 100Z'/%3E%3Cpath fill='%23ff8a1f' d='M27 100C26 79 42 75 36 61C34 55 36 52 35 50C53 64 65 77 64 100ZM71 100C70 75 88 71 92 54C96 47 101 45 102 42C107 58 114 74 113 100ZM122 100C121 77 138 73 131 57C128 51 131 48 130 45C149 61 162 75 161 100ZM158 100C157 75 175 70 180 53C184 46 190 43 191 39C194 56 201 73 200 100ZM207 100C206 70 222 64 224 44C227 36 232 32 233 29C238 49 245 68 244 100ZM251 100C250 71 268 65 260 45C258 37 261 33 260 30C279 49 293 68 292 100ZM300 100C299 71 316 66 321 46C325 38 330 35 331 31C334 51 341 69 340 100ZM-20 100C-21 71 -4 66 1 46C5 38 10 35 11 31C14 51 21 69 20 100Z'/%3E%3Cpath fill='%23ffcf4a' d='M-5 100C-6 87 8 84 12 76C16 72 20 70 21 69C23 78 28 86 27 100ZM315 100C314 87 328 84 332 76C336 72 340 70 341 69C343 78 348 86 347 100ZM42 100C41 90 55 88 58 82C61 79 65 78 66 77C69 83 74 90 73 100ZM88 100C87 85 98 82 101 72C105 68 108 66 109 65C109 75 113 84 112 100ZM135 100C135 87 146 84 149 75C151 71 155 70 156 68C158 77 162 86 162 100ZM173 100C173 87 187 85 182 77C181 73 183 72 182 70C197 79 207 87 206 100ZM225 100C224 88 235 86 241 79C245 75 249 74 250 72C248 80 251 88 250 100ZM268 100C267 87 279 85 285 76C290 73 294 71 295 70C293 78 296 86 295 100Z'/%3E%3C/svg%3E") left 0 bottom 0 / 320px 100px repeat-x,
+        linear-gradient(0deg, rgba(225, 33, 37, 0.85), rgba(225, 33, 37, 0.35) 55%, rgba(131, 30, 32, 0));
+    -webkit-mask-image: linear-gradient(0deg, #000 45%, rgba(0, 0, 0, 0.35) 85%, transparent);
+    mask-image: linear-gradient(0deg, #000 45%, rgba(0, 0, 0, 0.35) 85%, transparent);
+}
+
+/* Gold-foil Rye title over an oxblood drop; the gradient fill only where background-clip: text works. */
+html[data-theme="cuphead-casino"] :where(.wordmark, .cover-title, .rules h1) {
+    font-family: 'Rye', 'Alfa Slab One', serif;
+    font-weight: 400;
+    color: var(--foil);
+}
+html[data-theme="cuphead-casino"] .wordmark { letter-spacing: 1.5px; }
+html[data-theme="cuphead-casino"] .wordmark:hover { color: #f6e3a1; }
+html[data-theme="cuphead-casino"] .cover-title { font-size: clamp(46px, 12.5vw, 120px); letter-spacing: 3px; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    html[data-theme="cuphead-casino"] :where(.wordmark, .cover-title, .rules h1) {
+        background: linear-gradient(180deg, #f6e3a1 10%, #e9ce80 35%, #bd9a43 62%, #8a6a2a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: none;
+    }
+    html[data-theme="cuphead-casino"] :where(.wordmark, .rules h1) { filter: drop-shadow(2px 2px 0 #831e20) drop-shadow(1px 1px 0 #000); }
+    html[data-theme="cuphead-casino"] .wordmark:hover { filter: drop-shadow(2px 2px 0 #e12125) drop-shadow(1px 1px 0 #000); }
+    html[data-theme="cuphead-casino"] .cover-title { filter: drop-shadow(4px 4px 0 #831e20) drop-shadow(2px 2px 0 #000); }
+}
+@media (max-width: 600px) {
+    html[data-theme="cuphead-casino"] .cover-title { filter: drop-shadow(3px 3px 0 #831e20) drop-shadow(1px 1px 0 #000); }
+}
+
+/* Cover: a spade-diamond-heart crest between gold rules over the title, and an oxblood plate under it, like the
+   cover's "of a" banner. */
+html[data-theme="cuphead-casino"] .cover::before {
+    content: '\2660   \25C6   \2665';
+    display: block;
+    width: min(380px, 86%);
+    margin: 0 auto 10px;
+    white-space: pre;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--gold);
+    background:
+        linear-gradient(var(--gold), var(--gold)) left center / 30% 2px no-repeat,
+        linear-gradient(var(--gold), var(--gold)) right center / 30% 2px no-repeat;
+}
+html[data-theme="cuphead-casino"] .cover-tagline { color: var(--cream); }
+html[data-theme="cuphead-casino"] .cover-tagline::before {
+    content: '\25C6  The Devil\2019s Dice  \25C6';
+    display: table;
+    margin: 0 auto 14px;
+    padding: 5px 16px 4px;
+    white-space: pre;
+    font-family: 'Limelight', 'Rye', serif;
+    font-size: 16px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--foil);
+    background: var(--oxblood);
+    border: 2px solid var(--gold);
+    border-radius: 2px;
+    box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--tomato);
+}
+
+/* Top bar: a gold rule over a red rule, with a red-and-gold diamond in the middle. */
+html[data-theme="cuphead-casino"] .topbar {
+    position: relative;
+    border-bottom: 2px solid var(--gold);
+    box-shadow: 0 3px 0 var(--paper), 0 6px 0 var(--tomato);
+    margin-bottom: 32px;
+}
+html[data-theme="cuphead-casino"] .topbar::after {
+    content: '\25C6';
+    position: absolute;
+    left: 50%;
+    bottom: -3px;
+    transform: translate(-50%, 50%);
+    padding: 0 6px;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--tomato);
+    background: var(--paper);
+    -webkit-text-stroke: 1.5px var(--foil);
+}
+
+/* Text on the dark page and panels is cream; links are gold foil. */
+html[data-theme="cuphead-casino"] :where(a:not(.tag)) { color: var(--foil); }
+html[data-theme="cuphead-casino"] :where(a:not(.tag)):hover { color: var(--accent-text); }
+html[data-theme="cuphead-casino"] :where(a):focus-visible { outline: 3px solid var(--marker); outline-offset: 4px; }
+html[data-theme="cuphead-casino"] :where(h2, h3) { font-family: 'Limelight', 'Alfa Slab One', serif; color: var(--foil); letter-spacing: 1.5px; }
+html[data-theme="cuphead-casino"] .panel h3 { font-size: 18px; }
+html[data-theme="cuphead-casino"] .rules h3 { font-size: 18px; }
+/* The lobby's "Rules" heading wraps its label: keep it inline so it reads as the heading, beside its diamond. */
+html[data-theme="cuphead-casino"] .panel h3 > label { display: inline; margin: 0; font: inherit; letter-spacing: inherit; color: inherit; text-transform: inherit; }
+html[data-theme="cuphead-casino"] :where(label, .label) { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 600; letter-spacing: 1.5px; font-size: 14px; color: var(--foil); }
+
+/* Panels: dark velvet with a gold border, a black gap and an oxblood ring, and a red diamond before each heading. */
+html[data-theme="cuphead-casino"] :where(.panel, .rules, .ruleset-card) {
+    background: radial-gradient(ellipse 120% 90% at 50% 0, #2a1726, var(--panel) 70%);
+    border-color: var(--gold);
+    color: var(--cream);
+}
+html[data-theme="cuphead-casino"] :where(.panel, .rules) { box-shadow: var(--shadow-lg); }
+html[data-theme="cuphead-casino"] body.my-turn .hand-panel { box-shadow: var(--shadow-turn); }
+html[data-theme="cuphead-casino"] .panel h3::before { content: '\25C6'; margin-right: 8px; font-size: 0.8em; color: var(--tomato); vertical-align: 0.06em; }
+html[data-theme="cuphead-casino"] :where(.player, .seat, .round-results li) { border-bottom-color: var(--gold-rule); }
+html[data-theme="cuphead-casino"] .standings :where(th, td) { border-bottom-color: var(--gold-rule); }
+html[data-theme="cuphead-casino"] .turn-name { color: var(--accent-text); }
+
+/* Rules index cards. */
+html[data-theme="cuphead-casino"] .ruleset-card { box-shadow: var(--shadow-lg); }
+html[data-theme="cuphead-casino"] .ruleset-card:hover { color: var(--cream); box-shadow: var(--shadow-hover); }
+html[data-theme="cuphead-casino"] .ruleset-card strong { font-family: 'Limelight', 'Alfa Slab One', serif; letter-spacing: 1.5px; font-size: 22px; color: var(--foil); }
+
+/* Green felt card table with a gold rim and a thin inset gold line. */
+html[data-theme="cuphead-casino"] .table-panel {
+    color: var(--on-petrol);
+    background: radial-gradient(ellipse at 50% 35%, var(--felt), var(--petrol) 78%);
+    box-shadow: inset 0 0 0 7px var(--petrol), inset 0 0 0 8.5px rgba(233, 206, 128, 0.55), var(--shadow-lg);
+}
+html[data-theme="cuphead-casino"] .table-panel h3 { color: #f2dc98; } /* a lighter foil: 5.1:1 on the felt */
+html[data-theme="cuphead-casino"] .table-panel h3::before { color: var(--foil); }
+
+/* Lobby ticket: a gold casino ticket with ink lettering. */
+html[data-theme="cuphead-casino"] .ticket { color: var(--ink); border-color: var(--ink); background: var(--marker); }
+html[data-theme="cuphead-casino"] .ticket .label { color: var(--ink); }
+html[data-theme="cuphead-casino"] .ticket button:focus-visible { outline-color: var(--ink); }
+
+/* Oswald casino buttons: devil-red primary over an oxblood step; secondary is velvet with a gold border. */
+html[data-theme="cuphead-casino"] button:not(.die) {
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--cream);
+    border-color: var(--gold);
+}
+html[data-theme="cuphead-casino"] button.primary { color: var(--on-tomato); border-color: var(--ink); box-shadow: 0 4px 0 var(--oxblood); text-shadow: 0 1px 0 var(--oxblood); }
+html[data-theme="cuphead-casino"] :is(.chip.active, .theme-switcher .chip[aria-pressed="true"]) { color: var(--ink); border-color: var(--ink); }
+html[data-theme="cuphead-casino"] .chip.active:hover:not(:disabled) { background: #f6e3a1; }
+
+/* Inputs: a darker well with a gold border and cream text. */
+html[data-theme="cuphead-casino"] :where(input, select) { color: var(--cream); background-color: var(--well); border-color: var(--gold); }
+html[data-theme="cuphead-casino"] select:disabled { color: var(--muted); background-color: var(--wash); border-color: var(--gold-rule); }
+html[data-theme="cuphead-casino"] input::placeholder { color: #a8957a; opacity: 1; }
+
+/* Dice: ink outlines stay, the offset shadow turns gold so every chip colour lifts off the velvet, plus a faint gold
+   glow. Selected dice keep the red shadow and get a gold-foil underline. */
+html[data-theme="cuphead-casino"] .die-shadow > * { fill: var(--gold); }
+html[data-theme="cuphead-casino"] .die-shape { filter: drop-shadow(0 0 3px rgba(233, 206, 128, 0.35)); }
+/* Gold reads too dark against the felt, so dice on the table get a pale foil shadow. */
+html[data-theme="cuphead-casino"] .table-panel .die-shadow > * { fill: var(--foil); }
+html[data-theme="cuphead-casino"] .die.selected .die-shadow > * { fill: var(--tomato); }
+html[data-theme="cuphead-casino"] .die.selected .die-shape { filter: drop-shadow(0 0 6px rgba(255, 138, 31, 0.55)); }
+html[data-theme="cuphead-casino"] .die.selected::after { background: var(--foil); border-radius: 999px; height: 6px; box-shadow: 0 0 8px rgba(255, 138, 31, 0.6); }
+
+/* Tags and badges: gold chips with black lettering; the turn sticker is pale foil with a red glow. */
+html[data-theme="cuphead-casino"] :where(.tag, .badge, .player-status) {
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 13px;
+}
+html[data-theme="cuphead-casino"] :where(.tag, .badge) { background: var(--gold); color: var(--paper); border: 1.5px solid var(--ink); }
+html[data-theme="cuphead-casino"] :where(.tag-marker, .badge-turn, .player-status) { background: var(--foil); color: var(--ink); border: var(--line-thin) solid var(--ink); }
+html[data-theme="cuphead-casino"] .turn-tag { font-size: 18px; box-shadow: 0 0 0 2px var(--tomato), 0 0 18px rgba(255, 90, 31, 0.75); }
+html[data-theme="cuphead-casino"] .badge-out { background: var(--tomato); color: var(--on-tomato); }
+html[data-theme="cuphead-casino"] .badge-passed { background: #4a3340; color: var(--cream); border-color: var(--gold-rule); }
+html[data-theme="cuphead-casino"] .badge-table { background: var(--petrol); color: var(--on-petrol); border-color: var(--gold); }
+
+/* The current seat is oxblood velvet with a gold border and a red glow; seats are cards on phones. */
+html[data-theme="cuphead-casino"] .seat.is-turn {
+    background: linear-gradient(180deg, #8f2326, var(--oxblood));
+    border-color: var(--gold);
+    border-radius: 3px;
+    box-shadow: 0 0 14px rgba(225, 33, 37, 0.5);
+}
+@media (max-width: 700px) {
+    html[data-theme="cuphead-casino"] .seat { border-color: var(--gold-rule); border-radius: 3px; }
+    html[data-theme="cuphead-casino"] .seat.is-turn { border-color: var(--gold); }
+}
+
+/* The message strip: devil red with a gold rim. */
+html[data-theme="cuphead-casino"] #message-area.visible {
+    border-radius: var(--radius);
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 15px;
+    box-shadow: 0 0 0 2px var(--gold), 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Rulebook: velvet page, gold-foil title, red-over-gold rule under each section, an oxblood-headed gold table. */
+html[data-theme="cuphead-casino"] .rules h1 { letter-spacing: 1px; }
+html[data-theme="cuphead-casino"] .rules h2 { border-bottom: 2px solid var(--tomato); box-shadow: 0 3px 0 var(--panel), 0 4px 0 var(--gold); padding-bottom: 6px; }
+html[data-theme="cuphead-casino"] .rules table { border-color: var(--gold); border-collapse: separate; border-spacing: 0; border-radius: 4px; overflow: hidden; }
+html[data-theme="cuphead-casino"] .rules :is(th, td) { border-color: var(--gold-rule); border-width: 0 var(--line-thin) var(--line-thin) 0; }
+html[data-theme="cuphead-casino"] .rules tr > :last-child { border-right-width: 0; }
+html[data-theme="cuphead-casino"] .rules tbody tr:last-child > * { border-bottom-width: 0; }
+html[data-theme="cuphead-casino"] .rules th { background: var(--oxblood); color: var(--cream); }
+html[data-theme="cuphead-casino"] .rules-index > .hint { color: var(--muted); }
+
+/* The switcher pill: velvet with a gold border and ring so it reads on the dark page. */
+html[data-theme="cuphead-casino"] .theme-switcher { border-color: var(--gold); box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--oxblood), 0 6px 16px rgba(0, 0, 0, 0.6); }
