@@ -29,7 +29,7 @@ html[data-theme="harmonies-bold"] {
     --ink: #223749;
     --panel: #fbf3d6;
     --tomato: #e08a3c;
-    --tomato-dark: #c8722a;
+    --tomato-dark: #e99a52;
     --petrol: #2e7394;
     --marker: #f3cc5d;
     --muted: #5e5a52;
@@ -38,7 +38,7 @@ html[data-theme="harmonies-bold"] {
     --on-tomato: #223749;
     --on-petrol: #fbf3d6;
     --table-hint: #e6f2f2;
-    --title: var(--tomato);
+    --title: #b05c1a;
     --accent-text: #a14a14;
 
     --die-red: #e0603f;
@@ -48,6 +48,12 @@ html[data-theme="harmonies-bold"] {
 
     --shadow-lg: 6px 6px 0 var(--petrol);
 }
+
+/* Marker yellow vanishes on cream; focus rings use teal. */
+html[data-theme="harmonies-bold"] :is(button:focus-visible, input:focus, select:focus) { outline-color: var(--petrol); }
+
+/* Night ink fails on darker marigold, so --tomato-dark is a lighter orange here; the wordmark hovers to rust. */
+html[data-theme="harmonies-bold"] .wordmark:hover { color: var(--accent-text); }
 
 /* ---------------------------------------------------------------- C: harmonies-soft
    Rounded shapes, fine night-ink linework, soft shadows; a sunlit sky and striped hills frame the page.
@@ -61,7 +67,7 @@ html[data-theme="harmonies-soft"] {
     --tomato-dark: #c8722a;
     --petrol: #2e7394;
     --marker: #f3d965;
-    --muted: #56616b;
+    --muted: #525c66;
     --wash: #f6ecd0;
     --rule: #e3d6b4;
     --on-tomato: #223749;
@@ -98,6 +104,7 @@ html[data-theme="harmonies-soft"] {
 /* Sky at the top, grain over the page background; panels sit on top untextured. */
 html[data-theme="harmonies-soft"] body {
     position: relative;
+    isolation: isolate;
     background:
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .2 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
         linear-gradient(180deg, #f3d965 0, #f6e7a6 160px, var(--paper) 380px) top / 100% 380px no-repeat,
@@ -120,7 +127,7 @@ html[data-theme="harmonies-soft"] .shell { padding-bottom: 150px; }
 
 /* Josefin Sans needs weight where Bowlby One was heavy by design (:where keeps this easy to override). */
 html[data-theme="harmonies-soft"] :where(h1, h2, h3, .label, button, label, .tag, .badge, .player-status,
-    .wordmark, .seat-name, .die-new, .ticket .code, .code-input, .table-desc strong, .standings th,
+    .wordmark, .seat-name, .die-new, #message-area.visible, .ticket .code, .code-input, .table-desc strong, .standings th,
     .ruleset-card strong, .rules th, .die-shape text, .theme-switcher-label) {
     font-weight: 700;
 }
@@ -132,8 +139,8 @@ html[data-theme="harmonies-soft"] .die-shadow { transform: translate(0, 8px); }
 html[data-theme="harmonies-soft"] .die-shadow > * { opacity: 0.22; }
 html[data-theme="harmonies-soft"] .die.selected .die-shadow { transform: translate(0, 14px); }
 html[data-theme="harmonies-soft"] .die.selected .die-shadow > * { fill: var(--tomato); opacity: 0.7; }
-html[data-theme="harmonies-soft"] .die.selected::after { border-radius: 999px; height: 4px; }
-html[data-theme="harmonies-soft"] .die-new { transform: rotate(var(--tilt)); }
+html[data-theme="harmonies-soft"] .die.selected::after { border-radius: var(--radius-sm); height: 4px; }
+html[data-theme="harmonies-soft"] .die-new { transform: none; }
 
 /* Bordered boxes the radius tokens don't reach. */
 html[data-theme="harmonies-soft"] :is(#message-area.visible, .seat.is-turn) { border-radius: var(--radius); }
