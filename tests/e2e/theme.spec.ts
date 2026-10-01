@@ -5,9 +5,9 @@ test('the theme switcher applies, remembers and URL-overrides the theme', async 
     await page.goto('/');
     await expect(html).not.toHaveAttribute('data-theme');
 
-    await page.getByRole('button', { name: 'B', exact: true }).click();
+    await page.getByRole('button', { name: 'Harmonies', exact: true }).click();
     await expect(html).toHaveAttribute('data-theme', 'harmonies-bold');
-    await expect(page.getByRole('button', { name: 'B', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'Harmonies', exact: true })).toHaveAttribute('aria-pressed', 'true');
 
     await page.reload();
     await expect(html).toHaveAttribute('data-theme', 'harmonies-bold');
