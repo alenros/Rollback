@@ -4,7 +4,12 @@ import Layout from '../components/Layout.astro';
 
 <Layout title="Rollback - Join Room">
     <section class="panel narrow">
-        <h2>Join a room</h2>
+        <h2 id="join-title">Join a room</h2>
+        <p id="invite-hint" class="hint" hidden>You've been invited! Pick a name to join.</p>
+        <div class="field">
+            <label for="player-name">Your name</label>
+            <input type="text" id="player-name" placeholder="Ann" maxlength="20">
+        </div>
         <div class="field">
             <label for="join-code">Room code</label>
             <input type="text" id="join-code" class="code-input" placeholder="ABC123" maxlength="6" autocomplete="off">
@@ -18,28 +23,46 @@ import Layout from '../components/Layout.astro';
 
 <script>
     import { GameError } from '../lib/game';
-    import { getSavedName, saveSession } from '../lib/session';
+    import { getCurrentPlayer, getRoomCodeFromUrl, getSavedName, saveName, saveSession } from '../lib/session';
 
     const BASE_URL = import.meta.env.BASE_URL;
 
     document.addEventListener('DOMContentLoaded', () => {
+        const playerNameInput = document.getElementById('player-name') as HTMLInputElement;
         const joinCodeInput = document.getElementById('join-code') as HTMLInputElement;
         const joinRoomBtn = document.getElementById('join-room-btn') as HTMLButtonElement;
 
+        // Invite links look like /join?code=ABC123.
+        const invitedCode = getRoomCodeFromUrl();
+        if (invitedCode) {
+            // Already seated in that room (e.g. the host opened their own link): go straight back.
+            if (localStorage.getItem('currentRoom') === invitedCode && getCurrentPlayer()) {
+                window.location.href = `${BASE_URL}lobby?code=${invitedCode}`;
+                return;
+            }
+            joinCodeInput.value = invitedCode;
+            (document.getElementById('join-title') as HTMLElement).textContent = `Join room ${invitedCode}`;
+            (document.getElementById('invite-hint') as HTMLElement).hidden = false;
+        }
+
+        playerNameInput.value = getSavedName();
+
         joinRoomBtn.addEventListener('click', async () => {
-            const playerName = getSavedName();
+            const playerName = playerNameInput.value.trim();
             const roomCode = joinCodeInput.value.trim().toUpperCase();
 
             if (!playerName) {
-                alert('Player name not found. Please go back to home.');
-                window.location.href = BASE_URL;
+                alert('Please enter your name');
+                playerNameInput.focus();
                 return;
             }
             if (roomCode.length !== 6) {
                 alert('Room code must be 6 characters');
+                joinCodeInput.focus();
                 return;
             }
 
+            saveName(playerName);
             joinRoomBtn.disabled = true;
             try {
                 const { joinRoom } = await import('../lib/room-actions');
@@ -53,14 +76,17 @@ import Layout from '../components/Layout.astro';
             }
         });
 
-        joinCodeInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') joinRoomBtn.click();
-        });
+        for (const input of [playerNameInput, joinCodeInput]) {
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') joinRoomBtn.click();
+            });
+        }
 
         document.getElementById('back-btn')?.addEventListener('click', () => {
             window.location.href = BASE_URL;
         });
 
-        joinCodeInput.focus();
+        // Focus whichever field still needs filling in.
+        (playerNameInput.value && !invitedCode ? joinCodeInput : playerNameInput).focus();
     });
 </script>

@@ -264,6 +264,8 @@ button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width:
 }
 .ticket .code { font-family: var(--display); font-size: 48px; letter-spacing: 6px; line-height: 1.1; }
 .ticket .hint { color: var(--ink); }
+.code-row { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.share-btn { font-size: 13px; padding: 7px 12px; }
 
 .player { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 2px dashed var(--ink); }
 .player:last-child { border-bottom: none; }

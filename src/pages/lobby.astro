@@ -118,6 +118,28 @@ const rulesets = rulesetList();
             }
         });
 
+        const shareBtn = document.getElementById('share-invite-btn') as HTMLButtonElement;
+        const shareStatus = document.getElementById('share-status') as HTMLElement;
+        const inviteUrl = new URL(`${BASE_URL}join?code=${roomCode}`, window.location.origin).href;
+        shareBtn.addEventListener('click', async () => {
+            const shareData = { title: 'Rollback', text: `Join my Rollback game! Room ${roomCode}`, url: inviteUrl };
+            try {
+                // Phones get the native share sheet; desktops (where Windows/macOS also
+                // offer one, but pasting into chat is the norm) copy to the clipboard.
+                const isTouch = window.matchMedia('(pointer: coarse)').matches;
+                if (isTouch && navigator.share && navigator.canShare?.(shareData)) {
+                    await navigator.share(shareData);
+                    return;
+                }
+                await navigator.clipboard.writeText(inviteUrl);
+                shareStatus.textContent = 'Invite link copied to clipboard!';
+            } catch (error) {
+                if (error instanceof DOMException && error.name === 'AbortError') return; // share sheet dismissed
+                console.error('Error sharing invite:', error);
+                shareStatus.textContent = `Copy this link: ${inviteUrl}`;
+            }
+        });
+
         document.getElementById('leave-room-btn')?.addEventListener('click', async () => {
             try {
                 unwatch();

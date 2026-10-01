@@ -8,6 +8,10 @@ const { codeId = "display-room-code" } = Astro.props;
 
 <section class="panel ticket" aria-label="Room code">
     <span class="label">Room code</span>
-    <div class="code" id={codeId}></div>
-    <p class="hint">Share it with 1–4 friends.</p>
+    <div class="code-row">
+        <div class="code" id={codeId}></div>
+        <button id="share-invite-btn" class="share-btn" title="Share an invite link">Share link</button>
+    </div>
+    <p id="share-status" class="hint" aria-live="polite"></p>
+    <p class="hint">Share the code or an invite link with 1–4 friends.</p>
 </section>
