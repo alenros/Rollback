@@ -358,3 +358,58 @@ describe('normalizeGame', () => {
         expect(s.table!.dice).toHaveLength(1);
     });
 });
+
+describe('replacing', () => {
+    const replace = (s: GameState, playerId: string, handDieId: string, tableDieId: string) =>
+        applyAction(s, { type: 'replace', playerId, handDieId, tableDieId }, ones);
+    /** Table play owned by the last seat, turn with the first, as after a real play. */
+    const replaceState = (hands: Record<string, Die[]>, table: Die[]) => {
+        const seating = Object.keys(hands);
+        return makeState(hands, { rulesetId: 'colors-replace', table: { playerId: seating[seating.length - 1], dice: table } });
+    };
+
+    it('swaps a hand die into the table play and rerolls the die taken; counts as a pass', () => {
+        const s = replace(replaceState(
+            { a: [die('a1', 6), die('a2', 9)], b: [die('b1', 1)], c: [die('c1', 1)] },
+            [die('x', 5), die('y', 5)],
+        ), 'a', 'a1', 'y');
+        expect(s.table).toEqual({ playerId: 'c', dice: [die('x', 5), die('a1', 6)] }); // pair of 5s → run 5-6
+        expect(s.hands.a.map(d => [d.id, d.value])).toEqual([['a2', 9], ['y', 1]]);
+        expect(s.rolled.a).toEqual(['y']);
+        expect(s.passed).toEqual(['a']);
+        expect(s.turn).toBe('b');
+        expect(s.log.at(-1)).toMatch(/A swaps/);
+    });
+
+    it('rejects swaps that break the play, and dice that are not there', () => {
+        const s = replaceState(
+            { a: [die('a1', 9)], b: [die('b1', 1)], c: [die('c1', 1)] },
+            [die('x', 3), die('y', 4), die('z', 5)],
+        );
+        expect(() => replace(s, 'a', 'a1', 'y')).toThrow(/break the play/);
+        expect(() => replace(s, 'a', 'nope', 'y')).toThrow(/not behind your screen/);
+        expect(() => replace(s, 'a', 'a1', 'nope')).toThrow(/not on the table/);
+    });
+
+    it('a swapped-in bomb shape stays on the table and is beaten as a plain run', () => {
+        const red = [1, 2, 3, 4].map(v => die(`t${v}`, v, 12, 'red'));
+        let s = replaceState({
+            a: [die('a5', 5, 12, 'red'), die('a9', 9)],
+            b: [2, 3, 4, 5, 6, 7].map(v => die(`g${v}`, v, 12, 'green')).concat(die('b9', 9)),
+            c: [die('c1', 1)],
+        }, [...red, die('t5', 5, 12, 'blue')]);
+        s = replace(s, 'a', 'a5', 't5'); // red 1-5: bomb-shaped, but no bomb effect
+        expect(s.table!.playerId).toBe('c');
+        expect(s.table!.dice.map(d => d.id)).toEqual(['t1', 't2', 't3', 't4', 'a5']);
+        expect(s.turn).toBe('b');
+        s = play(s, 'b', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7'); // one-color 6-run: one more die
+        expect(s.table!.playerId).toBe('b');
+    });
+
+    it('ends the trick when everyone else has passed or replaced', () => {
+        const s = replace(replaceState({ a: [die('a1', 6)], b: [die('b1', 1)] }, [die('x', 5), die('y', 5)]), 'a', 'a1', 'y');
+        expect(s.table).toBeNull();
+        expect(s.trick).toBe(2);
+        expect(s.turn).toBe('b');
+    });
+});

@@ -80,6 +80,20 @@ describe('buildEvents', () => {
         });
     });
 
+    it('records a replace with the die given, the die taken and the table after', () => {
+        let s = threePlayerState({ a: [die('a1', 5), die('a2', 7)], b: [die('b1', 6)], c: [die('c1', 1)] });
+        s = { ...s, rulesetId: 'colors-replace' };
+        s = applyAction(s, { type: 'play', playerId: 'a', dieIds: ['a1'] }, ones);
+        const action = { type: 'replace' as const, playerId: 'b', handDieId: 'b1', tableDieId: 'a1' };
+        const [event] = buildEvents(s, applyAction(s, action, ones), action);
+        expect(event).toMatchObject({
+            type: 'replace', player: 'b', hand: ['red:12:6'],
+            table: { kind: 'single', value: 5 }, tableAfter: { kind: 'single', value: 6 },
+            given: 'red:12:6', die: { from: 'red:12:5', to: 'red:12:1' },
+            beatOptions: 1, trickEnded: false,
+        });
+    });
+
     it('adds roundEnd and, after the last round, gameEnd', () => {
         let s = threePlayerState({ a: [die('a1', 5)], b: [die('b1', 9)], c: [die('c1', 1)] });
         s = { ...s, round: 3, totalRounds: 3 };

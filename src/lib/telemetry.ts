@@ -10,9 +10,9 @@
  * Dice are encoded compactly as "color:sides:value" strings, e.g. "red:8:5".
  */
 import type { Die } from './dice';
-import { rulesOf, standings, type Action, type GameState } from './game';
+import { rulesOf, standings, swapIn, type Action, type GameState } from './game';
 import type { Play } from './plays';
-import { beatingPlays, type Ruleset } from './rulesets';
+import { beatingPlays, classifyTable } from './rulesets';
 
 type DieCode = string;
 type PlaySummary = Pick<Play, 'kind' | 'count' | 'value' | 'color' | 'of'>;
@@ -82,6 +82,22 @@ export type TelemetryEvent = Base & (
         handSizes: Record<string, number>;
     }
     | {
+        type: 'replace';
+        trick: number;
+        player: string;
+        hand: DieCode[];
+        table: PlaySummary;
+        beatOptions: number;
+        /** The die put into the table play (it keeps its value). */
+        given: DieCode;
+        /** The table die taken, before and after its reroll. */
+        die: { from: DieCode; to: DieCode };
+        /** The table play after the swap. */
+        tableAfter: PlaySummary;
+        trickEnded: boolean;
+        handSizes: Record<string, number>;
+    }
+    | {
         type: 'roundEnd';
         /** Finishing order, first to last. */
         finished: string[];
@@ -96,10 +112,8 @@ export type TelemetryEvent = Base & (
 
 const code = (d: Die): DieCode => `${d.color}:${d.sides}:${d.value}`;
 /** Firebase rejects `undefined`, so optional fields are only set when present. */
-const summary = (rules: Ruleset, dice: readonly Die[]): PlaySummary => {
-    const { kind, count, value, color, of } = rules.classifyPlay(dice)!;
-    return { kind, count, value, ...(color && { color }), ...(of && { of }) };
-};
+const summary = ({ kind, count, value, color, of }: Play): PlaySummary =>
+    ({ kind, count, value, ...(color && { color }), ...(of && { of }) });
 const handSizes = (s: GameState) => Object.fromEntries(s.seating.map(id => [id, s.hands[id]?.length ?? 0]));
 
 /**
@@ -140,8 +154,8 @@ export function buildEvents(before: GameState | null, after: GameState, action?:
         events.push({
             ...common, type: 'play',
             dice: dice.map(code),
-            play: summary(rules, dice),
-            beat: before!.table ? summary(rules, before!.table.dice) : null,
+            play: summary(rules.classifyPlay(dice)!),
+            beat: before!.table ? summary(classifyTable(rules, before!.table.dice)!) : null,
             pickedUp: handAfter.filter(d => picked.has(d.id)).map(code),
             wentOut: after.finished.includes(action.playerId) && !before!.finished.includes(action.playerId),
             trickEnded,
@@ -149,24 +163,41 @@ export function buildEvents(before: GameState | null, after: GameState, action?:
         });
     } else if (action.type === 'pickup') {
         const table = before!.table!.dice;
-        const tablePlay = rules.classifyPlay(table)!;
+        const tablePlay = classifyTable(rules, table)!;
         const taken = table.find(d => d.id === action.dieId)!;
         const now = (after.hands[action.playerId] ?? []).find(d => d.id === action.dieId)!;
         events.push({
             ...common, type: 'pickup',
-            table: summary(rules, table),
+            table: summary(tablePlay),
             beatOptions: beatingPlays(rules, hand, tablePlay).length,
             die: { from: code(taken), to: code(now) },
             trickEnded,
             handSizes: handSizes(after),
         });
+    } else if (action.type === 'replace') {
+        const table = before!.table!.dice;
+        const tablePlay = classifyTable(rules, table)!;
+        const given = hand.find(d => d.id === action.handDieId)!;
+        const taken = table.find(d => d.id === action.tableDieId)!;
+        const now = (after.hands[action.playerId] ?? []).find(d => d.id === action.tableDieId)!;
+        events.push({
+            ...common, type: 'replace',
+            table: summary(tablePlay),
+            beatOptions: beatingPlays(rules, hand, tablePlay).length,
+            given: code(given),
+            die: { from: code(taken), to: code(now) },
+            // From `before`: if the replace ended the trick, `after.table` is already cleared.
+            tableAfter: summary(classifyTable(rules, swapIn(table, action.tableDieId, given))!),
+            trickEnded,
+            handSizes: handSizes(after),
+        });
     } else {
         const table = before!.table!.dice;
-        const tablePlay = rules.classifyPlay(table)!;
+        const tablePlay = classifyTable(rules, table)!;
         const handAfter = after.hands[action.playerId] ?? [];
         events.push({
             ...common, type: 'pass',
-            table: summary(rules, table),
+            table: summary(tablePlay),
             beatOptions: beatingPlays(rules, hand, tablePlay).length,
             allowance: table.length,
             rerolls: action.rerollIds.map(id => ({

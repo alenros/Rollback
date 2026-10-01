@@ -8,7 +8,7 @@
  */
 import { bagSize, buildBag, roll, shuffle, type Die, type Rng } from './dice';
 import { describePlay } from './plays';
-import { DEFAULT_RULESET_ID, getRuleset, type Ruleset, type RulesetId } from './rulesets';
+import { classifyTable, DEFAULT_RULESET_ID, getRuleset, type Ruleset, type RulesetId } from './rulesets';
 
 const LOG_LIMIT = 40;
 
@@ -56,7 +56,8 @@ export interface GameState {
 export type Action =
     | { type: 'play'; playerId: string; dieIds: string[]; takeBackId?: string }
     | { type: 'pass'; playerId: string; rerollIds: string[] }
-    | { type: 'pickup'; playerId: string; dieId: string };
+    | { type: 'pickup'; playerId: string; dieId: string }
+    | { type: 'replace'; playerId: string; handDieId: string; tableDieId: string };
 
 export class GameError extends Error {
     constructor(message: string) {
@@ -160,7 +161,8 @@ export function applyAction(state: GameState, action: Action, rng: Rng = Math.ra
     if (state.turn !== action.playerId) throw new GameError("It's not your turn");
     const next = action.type === 'play' ? applyPlay(state, action.playerId, action.dieIds, rng, action.takeBackId)
         : action.type === 'pass' ? applyPass(state, action.playerId, action.rerollIds, rng)
-        : applyPickup(state, action.playerId, action.dieId, rng);
+        : action.type === 'pickup' ? applyPickup(state, action.playerId, action.dieId, rng)
+        : applyReplace(state, action.playerId, action.handDieId, action.tableDieId, rng);
     return { ...next, seq: state.seq + 1 };
 }
 
@@ -180,7 +182,7 @@ function applyPlay(state: GameState, playerId: string, dieIds: string[], rng: Rn
         if (play.kind !== 'single') throw new GameError('The leader plays one die');
         log = appendLog(state.log, `${name} leads ${describePlay(play)}.`);
     } else {
-        const tablePlay = rules.classifyPlay(state.table.dice)!;
+        const tablePlay = classifyTable(rules, state.table.dice)!;
         if (!rules.beats(play, tablePlay)) {
             throw new GameError(`${describePlay(play)} does not beat ${describePlay(tablePlay)}`);
         }
@@ -285,6 +287,45 @@ function applyPickup(state: GameState, playerId: string, dieId: string, rng: Rng
         log: appendLog(state.log, `${state.names[playerId]} picks up a ${taken.color} d${taken.sides} from the table and rerolls it.`),
     };
     if (rest.length === 0) return endTrick(next, nextClockwise(next, playerId, id => !isOut(next, id))!);
+    return advanceTurn(next, playerId);
+}
+
+/**
+ * Replace: put one die from behind your screen into the table play and take one
+ * table die in exchange, rerolled. Counts as a pass. The table must still be a
+ * legal play; a bomb shape is allowed but only counts as the set or run it is
+ * (see classifyTable). The table play stays with the player who made it.
+ */
+export function canReplace(state: GameState, playerId: string, handDieId: string, tableDieId: string): boolean {
+    const rules = rulesOf(state);
+    const given = state.hands[playerId]?.find(d => d.id === handDieId);
+    if (!rules.replace || !state.table || !given || !state.table.dice.some(d => d.id === tableDieId)) return false;
+    return rules.classifyPlay(swapIn(state.table.dice, tableDieId, given)) !== null;
+}
+
+/** `dice` with the die `outId` replaced by `die`, in the same place. */
+export const swapIn = (dice: readonly Die[], outId: string, die: Die): Die[] => dice.map(d => (d.id === outId ? die : d));
+
+function applyReplace(state: GameState, playerId: string, handDieId: string, tableDieId: string, rng: Rng): GameState {
+    const rules = rulesOf(state);
+    const table = state.table;
+    if (!rules.replace) throw new GameError(`${rules.name} has no replacing`);
+    if (!table) throw new GameError('There is nothing on the table to swap with');
+    const taken = table.dice.find(d => d.id === tableDieId);
+    if (!taken) throw new GameError('That die is not on the table');
+    const hand = state.hands[playerId] ?? [];
+    const [given] = pickDice(hand, [handDieId]);
+    if (!canReplace(state, playerId, handDieId, tableDieId)) throw new GameError('That swap would break the play on the table');
+
+    const next: GameState = {
+        ...state,
+        hands: { ...state.hands, [playerId]: [...hand.filter(d => d.id !== handDieId), roll(taken, rng)] },
+        table: { playerId: table.playerId, dice: swapIn(table.dice, tableDieId, given) },
+        passed: [...state.passed, playerId],
+        rolled: { ...state.rolled, [playerId]: [tableDieId] },
+        log: appendLog(state.log, `${state.names[playerId]} swaps a ${given.color} ${given.value} into the table`
+            + ` for a ${taken.color} d${taken.sides} and rerolls it.`),
+    };
     return advanceTurn(next, playerId);
 }
 
