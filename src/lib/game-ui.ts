@@ -3,8 +3,9 @@
  * page script only has to re-render on each Firebase snapshot and wire clicks.
  */
 import { COLORS, type Die, type Sides } from './dice';
-import { canPickUp, ordinal, placePoints, rerollAllowance, rulesOf, standings, type GameState } from './game';
+import { canPickUp, canReplace, ordinal, placePoints, rerollAllowance, rulesOf, standings, type GameState } from './game';
 import { describePlay } from './plays';
+import { classifyTable } from './rulesets';
 import { escapeHtml } from './session';
 
 export type SortMode = 'color' | 'value';
@@ -13,7 +14,7 @@ export interface ViewState {
     meId: string;
     isHost: boolean;
     selection: Set<string>;
-    /** A table die chosen to pick up, if any. */
+    /** A table die chosen to pick up, swap for, or take back after a bomb, if any. */
     tableSelection: string | null;
     sortBy: SortMode;
     /** My dice that were just picked up or rerolled (highlighted until my next move). */
@@ -118,9 +119,9 @@ export function renderTable(state: GameState, view: ViewState): string {
             : '';
     }
     const rules = rulesOf(state);
-    const play = rules.classifyPlay(state.table.dice)!;
-    // On your turn the table dice are clickable: to pick one up, or to choose a bomb's take-back.
-    const selectable = (rules.pickup || rules.bombPenalty) && state.phase === 'playing' && state.turn === view.meId;
+    const play = classifyTable(rules, state.table.dice)!;
+    // On your turn the table dice are clickable: to pick one up, swap for one, or choose a bomb's take-back.
+    const selectable = (rules.pickup || rules.replace || rules.bombPenalty) && state.phase === 'playing' && state.turn === view.meId;
     const dice = state.table.dice.map(d => dieHtml(d, { selectable, selected: view.tableSelection === d.id }));
     return `<div class="dice-row">${dice.join('')}</div>
         <p class="table-desc"><strong>${describePlay(play)}</strong> by ${nameOf(state, state.table.playerId)}</p>`;
@@ -150,11 +151,15 @@ export interface Controls {
     canPickUp: boolean;
     /** Whether this ruleset has a pick-up action at all. */
     showPickup: boolean;
+    canReplace: boolean;
+    /** Whether this ruleset has a replace action at all. */
+    showReplace: boolean;
 }
 
 export function computeControls(state: GameState, view: ViewState): Controls {
     const rules = rulesOf(state);
     const showPickup = rules.pickup;
+    const showReplace = rules.replace;
     const myTurn = state.phase === 'playing' && state.turn === view.meId;
     const hand = state.hands[view.meId] ?? [];
     const selected = hand.filter(d => view.selection.has(d.id));
@@ -162,26 +167,38 @@ export function computeControls(state: GameState, view: ViewState): Controls {
     const passLabel = selected.length ? `Pass & reroll ${selected.length}` : 'Pass';
     const passOk = myTurn && !!state.table && selected.length <= allowance;
     const pickupOk = myTurn && !!view.tableSelection && canPickUp(state, view.tableSelection);
-    const none = { canPlay: false, canPass: false, passLabel, canPickUp: false, showPickup };
+    const replaceOk = myTurn && selected.length === 1 && !!view.tableSelection
+        && canReplace(state, view.meId, selected[0].id, view.tableSelection);
+    const flags = { canPass: passOk, passLabel, canPickUp: pickupOk, showPickup, canReplace: replaceOk, showReplace };
+    const none = { ...flags, canPlay: false, canPass: false, canPickUp: false, canReplace: false };
 
     if (state.phase !== 'playing') return { hint: '', ...none };
     if (!myTurn) return { hint: `Waiting for ${nameOf(state, state.turn)}…`, ...none };
 
-    const tablePlay = state.table ? rules.classifyPlay(state.table.dice)! : null;
+    const tablePlay = state.table ? classifyTable(rules, state.table.dice)! : null;
     if (rules.pickup && view.tableSelection && selected.length === 0) {
         const last = state.table!.dice.length === 1;
-        const hint = !pickupOk ? 'Taking that die would break the play: pick up an end die.'
+        const swapNote = rules.replace ? ' Or select one of your dice to swap it in.' : '';
+        const hint = (!pickupOk ? 'Taking that die would break the play: pick up an end die.'
             : last ? 'Pick up and reroll the last die: it goes behind your screen, the table clears, and the next player leads.'
-            : 'Pick up and reroll that die: it goes behind your screen. Counts as a pass.';
-        return { hint, canPlay: false, canPass: passOk, passLabel, canPickUp: pickupOk, showPickup };
+            : 'Pick up and reroll that die: it goes behind your screen. Counts as a pass.') + swapNote;
+        return { hint, ...flags, canPlay: false };
+    }
+    if (rules.replace && view.tableSelection && selected.length === 1) {
+        const given = selected[0];
+        const hint = replaceOk
+            ? `Swap your ${given.color} ${given.value} into the play and take that table die, rerolled. Counts as a pass.`
+            : 'That swap would break the play on the table.';
+        return { hint, ...flags, canPlay: false };
     }
     if (selected.length === 0) {
         const colorNote = tablePlay && rules.colorRequired(tablePlay) ? ' (it must be one color)' : '';
         const pickupNote = rules.pickup ? ', or click a table die to pick it up and reroll it' : '';
+        const swapNote = rules.replace ? ' Select one of your dice and a table die to swap them.' : '';
         const hint = tablePlay
-            ? `Select dice that beat <strong>${describePlay(tablePlay)}</strong>${colorNote}, or pass and reroll up to ${allowance}${pickupNote}.`
+            ? `Select dice that beat <strong>${describePlay(tablePlay)}</strong>${colorNote}, or pass and reroll up to ${allowance}${pickupNote}.${swapNote}`
             : 'You lead: select one die to play.';
-        return { hint, canPlay: false, canPass: passOk, passLabel, canPickUp: false, showPickup };
+        return { hint, ...flags, canPlay: false, canPickUp: false, canReplace: false };
     }
 
     const play = rules.classifyPlay(selected);
@@ -212,7 +229,7 @@ export function computeControls(state: GameState, view: ViewState): Controls {
     }
     if (canPlay && selected.length === hand.length) hint += ' Those are your last dice — you go out!';
     if (tablePlay && selected.length > allowance) hint += ` (Passing rerolls at most ${allowance}.)`;
-    return { hint, canPlay, canPass: passOk, passLabel, canPickUp: pickupOk, showPickup };
+    return { hint, ...flags, canPlay };
 }
 
 export function renderRoundPanel(state: GameState, view: ViewState): string {

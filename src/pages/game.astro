@@ -33,6 +33,7 @@ import Layout from '../components/Layout.astro';
                     <button id="play-btn" type="button" class="primary" disabled>Play</button>
                     <button id="pass-btn" type="button" disabled>Pass</button>
                     <button id="pickup-btn" type="button" disabled>Pick up &amp; reroll</button>
+                    <button id="replace-btn" type="button" disabled>Replace &amp; reroll</button>
                     <button id="clear-btn" type="button">Clear</button>
                 </div>
             </section>
@@ -71,6 +72,7 @@ import Layout from '../components/Layout.astro';
         const playBtn = $('play-btn') as HTMLButtonElement;
         const passBtn = $('pass-btn') as HTMLButtonElement;
         const pickupBtn = $('pickup-btn') as HTMLButtonElement;
+        const replaceBtn = $('replace-btn') as HTMLButtonElement;
         const message = $('message-area');
 
         let state: GameState | null = null;
@@ -124,6 +126,8 @@ import Layout from '../components/Layout.astro';
             passBtn.textContent = controls.passLabel;
             pickupBtn.disabled = busy || !controls.canPickUp;
             pickupBtn.hidden = !controls.showPickup;
+            replaceBtn.disabled = busy || !controls.canReplace;
+            replaceBtn.hidden = !controls.showReplace;
 
             document.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.sort === view.sortBy);
@@ -212,6 +216,10 @@ import Layout from '../components/Layout.astro';
 
         pickupBtn.addEventListener('click', () => run(() =>
             sendAction(roomCode, { type: 'pickup', playerId: view.meId, dieId: view.tableSelection! })));
+
+        replaceBtn.addEventListener('click', () => run(() => sendAction(roomCode, {
+            type: 'replace', playerId: view.meId, handDieId: [...view.selection][0], tableDieId: view.tableSelection!,
+        })));
 
         $('clear-btn').addEventListener('click', () => {
             view.selection.clear();

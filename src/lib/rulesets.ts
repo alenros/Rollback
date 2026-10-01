@@ -25,6 +25,8 @@ export interface Ruleset {
     maxPlayers: number;
     /** May a player take one die from the table instead of beating or passing? */
     pickup: boolean;
+    /** May a player swap one of their dice for a table die, rerolling the one taken (counts as a pass)? */
+    replace: boolean;
     /**
      * Does a bomb cost the bomber? If so they take back one of the bombed dice
      * (their choice), rerolled, unless the bomb took them out.
@@ -66,6 +68,7 @@ const classic: Ruleset = {
     minPlayers: 2,
     maxPlayers: 5,
     pickup: false,
+    replace: false,
     bombPenalty: false,
 
     classifyPlay(dice) {
@@ -111,6 +114,7 @@ const colorsRules: Ruleset = {
     minPlayers: 2,
     maxPlayers: 5,
     pickup: true,
+    replace: false,
     bombPenalty: false,
 
     classifyPlay(dice) {
@@ -162,6 +166,19 @@ const colorsBombPenalty: Ruleset = {
 };
 
 // ---------------------------------------------------------------------------
+// Colors: pass & replace. Identical to Colors, plus a swap with the table.
+// ---------------------------------------------------------------------------
+
+const colorsReplace: Ruleset = {
+    ...colorsRules,
+    id: 'colors-replace',
+    name: 'Colors: pass & replace',
+    summary: 'Colors, plus a new move: swap one of your dice for a table die and reroll the die you took.',
+    version: '2026-10-01-colors-replace',
+    replace: true,
+};
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -170,6 +187,7 @@ export const RULESETS = {
     classic,
     colors: colorsRules,
     'colors-bomb-penalty': colorsBombPenalty,
+    'colors-replace': colorsReplace,
 } satisfies Record<string, Ruleset>;
 
 export type RulesetId = keyof typeof RULESETS;
@@ -187,6 +205,17 @@ export const MAX_PLAYERS_ANY = Math.max(...rulesetList().map(r => r.maxPlayers))
 
 export function totalDice(rules: Ruleset): number {
     return bagSize(rules.bag);
+}
+
+/**
+ * The play on the table. Real bombs clear the table at once, so a bomb shape
+ * there can only come from a swap, and it counts as the plain set or run it is.
+ */
+export function classifyTable(rules: Ruleset, dice: readonly Die[]): Play | null {
+    const play = rules.classifyPlay(dice);
+    if (play?.kind !== 'bomb') return play;
+    const { of, color, ...rest } = play;
+    return { ...rest, kind: of!, ...(color && { color }) };
 }
 
 /**

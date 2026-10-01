@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { bagSize, buildBag, eachColorAndType } from '../../src/lib/dice';
+import { bagSize, buildBag, COLORS, eachColorAndType } from '../../src/lib/dice';
 import { applyAction, startGame } from '../../src/lib/game';
-import { DEFAULT_RULESET_ID, getRuleset, RULESETS, rulesetList } from '../../src/lib/rulesets';
+import { classifyTable, DEFAULT_RULESET_ID, getRuleset, RULESETS, rulesetList } from '../../src/lib/rulesets';
 
 const players = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `p${i}`, name: `P${i}` }));
 
@@ -54,6 +54,16 @@ describe('the engine follows the game’s ruleset', () => {
         expect(() => applyAction(s, { type: 'pickup', playerId: other, dieId: s.table!.dice[0].id }))
             .toThrow(/no picking up/);
     });
+
+    it('only allows replacing where the ruleset has it', () => {
+        let s = startGame(players(2), () => 0, { rulesetId: 'colors' });
+        const leader = s.turn;
+        s = applyAction(s, { type: 'play', playerId: leader, dieIds: [s.hands[leader][0].id] });
+        const other = s.turn;
+        expect(() => applyAction(s, {
+            type: 'replace', playerId: other, handDieId: s.hands[other][0].id, tableDieId: s.table!.dice[0].id,
+        })).toThrow(/no replacing/);
+    });
 });
 
 describe('Colors: bomb penalty', () => {
@@ -104,5 +114,25 @@ describe('Colors: bomb penalty', () => {
     it('plain Colors bombs still cost nothing', () => {
         const s = bomb(bombState('colors', [red('t1', 7), red('t2', 8)]), 't2');
         expect(s.hands[s.seating[1]].map(d => d.id)).toEqual(['b9']);
+    });
+});
+
+describe('classifyTable', () => {
+    const rules = RULESETS['colors-replace'];
+    const red = (v: number) => ({ id: `r${v}`, color: 'red' as const, sides: 12 as const, value: v });
+
+    it('reports a bomb shape as the plain run or set it is', () => {
+        expect(classifyTable(rules, [1, 2, 3, 4, 5].map(red))).toEqual({ kind: 'run', count: 5, value: 5, color: 'red' });
+        expect(classifyTable(rules, COLORS.map(color => ({ id: color, color, sides: 12 as const, value: 6 }))))
+            .toEqual({ kind: 'set', count: 4, value: 6 });
+    });
+
+    it('leaves every other play alone', () => {
+        expect(classifyTable(rules, [red(3)])).toEqual(rules.classifyPlay([red(3)]));
+        expect(classifyTable(rules, [red(3), red(9)])).toBeNull();
+    });
+
+    it('only Colors: pass & replace has replacing', () => {
+        expect(rulesetList().filter(r => r.replace).map(r => r.id)).toEqual(['colors-replace']);
     });
 });
