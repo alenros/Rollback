@@ -1,0 +1,30 @@
+---
+// Trial-only: floating pill to flip between the candidate themes. Removed once one is chosen.
+import { THEMES, THEME_LABELS } from '../lib/theme';
+---
+
+<div class="theme-switcher" role="group" aria-label="Trial theme">
+    <span class="theme-switcher-label">Theme</span>
+    {THEMES.map(t => (
+        <button type="button" class="chip" data-theme-choice={t} aria-pressed="false" title={THEME_LABELS[t].title}>
+            {THEME_LABELS[t].short}
+        </button>
+    ))}
+</div>
+
+<script>
+    import { applyTheme, currentTheme, parseTheme, saveTheme } from '../lib/theme';
+
+    const root = document.documentElement;
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-theme-choice]');
+    const sync = () => buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeChoice === currentTheme(root))));
+
+    buttons.forEach(b => b.addEventListener('click', () => {
+        const theme = parseTheme(b.dataset.themeChoice);
+        if (!theme) return;
+        applyTheme(root, theme);
+        saveTheme(theme);
+        sync();
+    }));
+    sync();
+</script>

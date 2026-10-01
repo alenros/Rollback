@@ -22,7 +22,7 @@
     --die-blue: #1c7ed6;
     --die-green: #2f9e44;
     --die-yellow: #f2b705;
-    --die-stroke: 6;
+    --die-stroke: 6; /* unitless SVG user units: used in calc() with plain numbers */
 
     --display: 'Bowlby One', 'Arial Black', Impact, sans-serif;
     --body: 'Fraunces', Georgia, 'Times New Roman', serif;
