@@ -122,7 +122,8 @@ button.primary:hover:not(:disabled) { background: var(--tomato-dark); }
 
 .chip { font-size: 12px; padding: 5px 10px; box-shadow: 2px 2px 0 var(--ink); }
 .chip.active { background: var(--marker); }
-.sort-toggle { display: flex; gap: 8px; }
+.sort-toggle, .chip-group { display: flex; gap: 8px; }
+.hand-options { display: flex; flex-wrap: wrap; gap: 8px 16px; }
 
 .field { margin: 14px 0; }
 label { display: block; font-family: var(--display); text-transform: uppercase; font-size: 13px; margin-bottom: 6px; }
@@ -185,6 +186,11 @@ select:disabled { background: var(--wash); color: var(--ink); opacity: 1; }
 .die-shape text { fill: var(--die-text); font-family: var(--display); text-anchor: middle; dominant-baseline: middle; }
 .die-face { fill: var(--die-text); }
 .die-value { font-size: 30px; }
+.die-number { font-size: 38px; }
+.die-d4 .die-number { font-size: 30px; }
+/* Faces: suit pips by default, plain numerals when the player picks them (see Layout). */
+:root:not([data-die-faces="numbers"]) .die-face-number,
+:root[data-die-faces="numbers"] .die-face-pips { display: none; }
 
 button.die:hover:not(:disabled) { background: none; transform: translateY(-3px); }
 button.die:active:not(:disabled) { transform: translateY(-1px); }

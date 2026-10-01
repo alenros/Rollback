@@ -87,16 +87,17 @@ interface PipFrame {
 
 /**
  * Silhouettes of the polyhedral dice (viewBox 0 0 100 100). `hull` is the outline's
- * corners, used to keep pips off the edge. Shape shows the type; fill shows the color.
+ * corners, used to keep pips off the edge; `numberY` centers a plain numeral in the
+ * shape's visual middle. Shape shows the type; fill shows the color.
  */
-export const SHAPES: Record<Sides, { outline: string; hull: Point[]; pips: PipFrame }> = {
-    4: { outline: '<polygon points="50,4 97,93 3,93"/>', hull: [[50, 4], [97, 93], [3, 93]],
+export const SHAPES: Record<Sides, { outline: string; hull: Point[]; numberY: number; pips: PipFrame }> = {
+    4: { outline: '<polygon points="50,4 97,93 3,93"/>', hull: [[50, 4], [97, 93], [3, 93]], numberY: 66,
         pips: { cy: 63.5, spread: 17, size: 14, max: 4, layout: 'rack' } },
-    6: { outline: '<rect x="7" y="7" width="86" height="86" rx="10"/>', hull: [[7, 7], [93, 7], [93, 93], [7, 93]],
+    6: { outline: '<rect x="7" y="7" width="86" height="86" rx="10"/>', hull: [[7, 7], [93, 7], [93, 93], [7, 93]], numberY: 52,
         pips: { cy: 50, spread: 21.5, size: 18.5, max: 6, layout: 'grid' } },
-    8: { outline: '<polygon points="50,2 96,44 50,98 4,44"/>', hull: [[50, 2], [96, 44], [50, 98], [4, 44]],
+    8: { outline: '<polygon points="50,2 96,44 50,98 4,44"/>', hull: [[50, 2], [96, 44], [50, 98], [4, 44]], numberY: 48,
         pips: { cy: 47, spread: 12.5, size: 14.5, max: 5, layout: 'diamond', valueY: 42, indexY: 68 } },
-    12: { outline: '<polygon points="50,3 97,37 79,93 21,93 3,37"/>', hull: [[50, 3], [97, 37], [79, 93], [21, 93], [3, 37]],
+    12: { outline: '<polygon points="50,3 97,37 79,93 21,93 3,37"/>', hull: [[50, 3], [97, 37], [79, 93], [21, 93], [3, 37]], numberY: 56,
         pips: { cy: 54.5, spread: 16.5, size: 13, max: 9, layout: 'grid', valueY: 47, indexY: 74 } },
 };
 
@@ -141,7 +142,8 @@ export function dieHtml(die: Die, opts: DieOptions = {}): string {
     const inner = `<svg class="die-shape" viewBox="-4 -4 112 112" aria-hidden="true">`
         + `<g class="die-shadow" transform="translate(6 6)">${shape.outline}</g>`
         + `<g class="die-outline">${shape.outline}</g>`
-        + `<g class="die-face">${faceHtml(die)}</g></svg>`
+        + `<g class="die-face die-face-pips">${faceHtml(die)}</g>`
+        + `<g class="die-face die-face-number"><text class="die-number" x="50" y="${shape.numberY}">${die.value}</text></g></svg>`
         + (opts.fresh ? '<span class="die-new" aria-hidden="true">new</span>' : '');
     const cls = ['die', `die-${die.color}`, `die-suit-${SUIT_OF[die.color]}`, `die-d${die.sides}`];
     if (opts.selected) cls.push('selected');
