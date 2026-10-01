@@ -12,7 +12,7 @@ import {
 import { DEFAULT_RULESET_ID, getRuleset, RULESETS, type RulesetId } from './rulesets';
 import { GameStatus } from './game-status';
 import type { Player } from './player';
-import { generatePlayerId, generateRoomCode, playersInOrder, type Room } from './room';
+import { generateGameId, generatePlayerId, generateRoomCode, playersInOrder, type Room } from './room';
 import { buildEvents, eventKey, type TelemetryEvent } from './telemetry';
 
 const roomRef = (code: string) => getDatabase().ref(`rooms/${code}`);
@@ -127,7 +127,7 @@ export async function setRoomRuleset(roomCode: string, hostId: string, rulesetId
 export async function startRoomGame(roomCode: string, hostId: string): Promise<void> {
     const ref = roomRef(roomCode);
     await ref.once('value');
-    const gameId = getDatabase().ref().push().key!; // unique, time-ordered
+    const gameId = generateGameId(); // readable, time-ordered (UTC)
     let started: GameState | null = null;
     await transact<Room>(ref, room => {
         started = null;

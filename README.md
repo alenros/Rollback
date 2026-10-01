@@ -56,7 +56,7 @@ Games store only `rulesetId`. The engine, UI and telemetry look the ruleset up w
 
 ### Gameplay telemetry
 
-Every committed change is appended to `telemetry/games/{gameId}/events/{seq}-{n}`. This is an append-only event log, kept separate from `rooms/` so the room cleanup never deletes it.
+Every committed change is appended to `telemetry/games/{gameId}/events/{seq}-{n}`. This is an append-only event log, kept separate from `rooms/` so the room cleanup never deletes it. The `gameId` is `yyyy-mm-dd-HH:mm-<GUID>` (UTC start time, e.g. `2026-10-02-14:07-3f2b8c1e-9d4a-4f5e-8b6c-2a1d0e9f7c35`), so games are readable and list in chronological order.
 
 | Event | When | Key fields |
 |---|---|---|
