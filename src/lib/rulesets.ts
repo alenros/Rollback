@@ -97,7 +97,7 @@ const oneColorRequired = (table: Play) => (table.kind === 'set' || table.kind ==
 const colorsRules: Ruleset = {
     id: 'colors',
     name: 'Colors',
-    summary: 'Same-color 5-runs and rainbow 4-sets are bombs, one-color plays must be followed in one color, and you may pick up a die from the table.',
+    summary: 'Same-color 5-runs and rainbow 4-sets are bombs, one-color plays must be followed in one color, and you may pick up and reroll a die from the table.',
     version: '2026-10-01-colors',
     bag: STANDARD_BAG,
     handSize: 9,

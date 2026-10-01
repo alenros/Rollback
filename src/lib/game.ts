@@ -267,7 +267,7 @@ function applyPickup(state: GameState, playerId: string, dieId: string, rng: Rng
         table: { playerId: table.playerId, dice: rest },
         passed: [...state.passed, playerId],
         rolled: { ...state.rolled, [playerId]: [dieId] },
-        log: appendLog(state.log, `${state.names[playerId]} picks up a ${taken.color} d${taken.sides} from the table.`),
+        log: appendLog(state.log, `${state.names[playerId]} picks up a ${taken.color} d${taken.sides} from the table and rerolls it.`),
     };
     if (rest.length === 0) return endTrick(next, nextClockwise(next, playerId, id => !isOut(next, id))!);
     return advanceTurn(next, playerId);

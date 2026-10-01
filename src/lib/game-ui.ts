@@ -166,13 +166,13 @@ export function computeControls(state: GameState, view: ViewState): Controls {
     if (view.tableSelection && selected.length === 0) {
         const last = state.table!.dice.length === 1;
         const hint = !pickupOk ? 'Taking that die would break the play: pick up an end die.'
-            : last ? 'Pick up the last die: it goes behind your screen, rerolled, the table clears, and the next player leads.'
-            : 'Pick up that die: it goes behind your screen, rerolled. Counts as a pass.';
+            : last ? 'Pick up and reroll the last die: it goes behind your screen, the table clears, and the next player leads.'
+            : 'Pick up and reroll that die: it goes behind your screen. Counts as a pass.';
         return { hint, canPlay: false, canPass: passOk, passLabel, canPickUp: pickupOk, showPickup };
     }
     if (selected.length === 0) {
         const colorNote = tablePlay && rules.colorRequired(tablePlay) ? ' (it must be one color)' : '';
-        const pickupNote = rules.pickup ? ', or click a table die to pick it up' : '';
+        const pickupNote = rules.pickup ? ', or click a table die to pick it up and reroll it' : '';
         const hint = tablePlay
             ? `Select dice that beat <strong>${describePlay(tablePlay)}</strong>${colorNote}, or pass and reroll up to ${allowance}${pickupNote}.`
             : 'You lead: select one die to play.';

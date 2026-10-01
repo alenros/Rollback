@@ -26,7 +26,7 @@ A set or run whose dice are all one color is **one-color**. Color matters for bo
  
 ## A trick
 1. **Lead.** The leader plays **one die**.
-2. **Beat, pass, or pick up.** Going clockwise, each player either beats the current play, passes, or picks up one die from the table. The turn keeps going around until the trick ends.
+2. **Beat, pass, or pick up.** Going clockwise, each player either beats the current play, passes, or picks up one die from the table and rerolls it. The turn keeps going around until the trick ends.
  
 ### Beating
 - **A single** is beaten by a higher single, or by a set or run of **2 dice**. For example, a pair of 1s or the run 1-2 beats a single 12.
