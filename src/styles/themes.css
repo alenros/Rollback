@@ -57,3 +57,119 @@ html[data-theme="harmonies-bold"] :is(button:focus-visible, input:focus, select:
 
 /* Night ink fails on darker marigold, so --tomato-dark is a lighter orange here; the wordmark hovers to rust. */
 html[data-theme="harmonies-bold"] .wordmark:hover { color: var(--accent-text); }
+
+/* ---------------------------------------------------------------- Cuphead B: cuphead-inkwell
+   Classic 1930s rubber-hose cartoon: sepia film stock with grain and a vignette, chunky brown-black ink,
+   rounded corners, pill buttons, a red Rye title card with an ink-and-gold drop shadow, poker-chip dice.
+   Grain and vignette sit behind the content, so panels stay flat and clean. */
+
+html[data-theme="cuphead-inkwell"] {
+    --paper: #efe2c2;
+    --ink: #1a120c;
+    --panel: #f7eedb;
+    --tomato: #d1281f;
+    --tomato-dark: #a91d16;
+    --petrol: #267865;
+    --marker: #c99a3c;
+    --muted: #5c4632;
+    --wash: #ecdcb6;
+    --rule: #dac7a0;
+    --on-tomato: #fff6e3;
+    --on-petrol: #fff6e3;
+    --table-hint: #eef5ef;
+    --title: #d1281f;
+    --accent-text: #a81c15;
+
+    --die-red: #e12125;
+    --die-blue: #2f56b0;
+    --die-green: #2b8539; /* a shade under #2f8f3e so white numerals reach 4.5:1 */
+    --die-yellow: #f2c230;
+    --die-stroke: 7;
+
+    --display: 'Alfa Slab One', 'Rockwell Extra Bold', 'Arial Black', serif;
+    --body: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --display-tracking: 0.6px;
+    --line: 4px;
+    --line-thin: 2.5px;
+    --radius: 14px;
+    --radius-sm: 999px;
+    --shadow: 3px 4px 0 var(--ink);
+    --shadow-sm: 2px 3px 0 var(--ink);
+    --shadow-lg: 5px 6px 0 var(--ink);
+    --shadow-hover: 6px 7px 0 var(--ink);
+    --shadow-turn: 6px 7px 0 var(--tomato);
+    --title-shadow: 2px 2px 0 var(--ink), 4px 4px 0 var(--marker);
+    --title-shadow-lg: 4px 4px 0 var(--ink), 8px 8px 0 var(--marker);
+    --press: translate(3px, 4px);
+    --lift: translate(-2px, -2px);
+    --tilt: -3deg;
+}
+
+/* Film grain on the page, and a burnt-film vignette at the viewport edges, behind the content (isolation keeps it above
+   the page). The side burn stops where the content column starts, and the top and bottom bands are thin, so text sitting
+   on the paper is never darkened; panels are opaque anyway. */
+html[data-theme="cuphead-inkwell"] body {
+    isolation: isolate;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .25 0 0 0 0 .16 0 0 0 0 .08 0 0 0 1.1 -.42'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+        var(--paper);
+}
+html[data-theme="cuphead-inkwell"] body::before {
+    --burn: max(10px, calc(50% - 550px));
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, rgba(40, 22, 8, 0.55), rgba(58, 32, 12, 0.18) calc(var(--burn) * 0.55), transparent var(--burn),
+            transparent calc(100% - var(--burn)), rgba(58, 32, 12, 0.18) calc(100% - var(--burn) * 0.55), rgba(40, 22, 8, 0.55)),
+        linear-gradient(180deg, rgba(40, 22, 8, 0.45), transparent 12px, transparent calc(100% - 12px), rgba(40, 22, 8, 0.45));
+}
+
+/* Title card: western Rye in devil red over an ink-then-gold double drop shadow. */
+html[data-theme="cuphead-inkwell"] :where(.wordmark, .cover-title, .rules h1) {
+    font-family: 'Rye', 'Alfa Slab One', serif;
+    font-weight: 400;
+}
+html[data-theme="cuphead-inkwell"] .wordmark { letter-spacing: 1.5px; }
+html[data-theme="cuphead-inkwell"] .cover-title {
+    display: inline-block;
+    font-size: clamp(42px, 12vw, 116px);
+    letter-spacing: 3px;
+    padding: 0.18em 0.42em 0.14em;
+    background: var(--panel);
+    border: 9px double var(--ink);
+    border-radius: 22px;
+    box-shadow: var(--shadow-lg);
+}
+@media (max-width: 600px) {
+    html[data-theme="cuphead-inkwell"] .cover-title { text-shadow: 2px 3px 0 var(--ink), 4px 5px 0 var(--marker); border-width: 7px; }
+}
+html[data-theme="cuphead-inkwell"] .cover-tagline { font-style: italic; }
+html[data-theme="cuphead-inkwell"] .topbar { border-bottom: 8px double var(--ink); }
+html[data-theme="cuphead-inkwell"] .rules h2 { border-bottom-style: double; border-bottom-width: 7px; }
+
+/* Bubbly pill buttons (dice are buttons too, but borderless). */
+html[data-theme="cuphead-inkwell"] button:not(.die) { border-radius: 999px; }
+/* The switcher wraps to two rows on phones, where a full pill turns into an oval. */
+html[data-theme="cuphead-inkwell"] .theme-switcher { border-radius: 24px; }
+
+/* Gold vanishes on sepia; focus rings and the focused-die outline use vest teal. */
+html[data-theme="cuphead-inkwell"] :where(button:focus-visible, input:focus, select:focus) { outline-color: var(--petrol); }
+html[data-theme="cuphead-inkwell"] button.die:focus-visible .die-outline > * { stroke: var(--petrol); }
+
+/* A selected die's underline gets rounded ends. */
+html[data-theme="cuphead-inkwell"] .die.selected::after { border-radius: 999px; height: 6px; }
+
+/* Bordered boxes the radius tokens don't reach. */
+html[data-theme="cuphead-inkwell"] #message-area.visible { border-radius: var(--radius); }
+html[data-theme="cuphead-inkwell"] .seat.is-turn { border-radius: 10px; }
+@media (max-width: 700px) {
+    html[data-theme="cuphead-inkwell"] .seat { border-radius: 10px; }
+}
+/* Collapsed borders can't be rounded, so draw the grid with separate borders on two sides of each cell. */
+html[data-theme="cuphead-inkwell"] .rules table { border-collapse: separate; border-spacing: 0; border-radius: var(--radius); overflow: hidden; }
+html[data-theme="cuphead-inkwell"] .rules :is(th, td) { border-width: 0 var(--line-thin) var(--line-thin) 0; }
+html[data-theme="cuphead-inkwell"] .rules tr > :last-child { border-right-width: 0; }
+html[data-theme="cuphead-inkwell"] .rules tbody tr:last-child > * { border-bottom-width: 0; }
