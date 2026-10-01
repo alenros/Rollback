@@ -20,3 +20,31 @@
 .theme-switcher .chip { padding: 4px 8px; font-size: 11px; }
 .theme-switcher .chip[aria-pressed="true"] { background: var(--marker); }
 @media print { .theme-switcher { display: none; } }
+
+/* ---------------------------------------------------------------- B: harmonies-bold
+   Box-art structure, Harmonies palette: night-ink lines, sunlit paper, marigold + teal accents. */
+
+html[data-theme="harmonies-bold"] {
+    --paper: #f6e7a6;
+    --ink: #223749;
+    --panel: #fbf3d6;
+    --tomato: #e08a3c;
+    --tomato-dark: #c8722a;
+    --petrol: #2e7394;
+    --marker: #f3cc5d;
+    --muted: #5e5a52;
+    --wash: #f3e5b4;
+    --rule: #dcc98e;
+    --on-tomato: #223749;
+    --on-petrol: #fbf3d6;
+    --table-hint: #e6f2f2;
+    --title: var(--tomato);
+    --accent-text: #a14a14;
+
+    --die-red: #e0603f;
+    --die-blue: #5a63a9;
+    --die-green: #4f8a4a;
+    --die-yellow: #f2c84b;
+
+    --shadow-lg: 6px 6px 0 var(--petrol);
+}
