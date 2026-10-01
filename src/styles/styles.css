@@ -191,8 +191,20 @@ button.die:active:not(:disabled) { transform: translateY(-1px); }
 button.die:focus-visible { outline: none; }
 button.die:focus-visible .die-outline > * { stroke: var(--marker); stroke-width: 9; }
 
-.die.selected, button.die.selected:hover:not(:disabled) { transform: translateY(-6px); }
-.die.selected .die-outline > * { stroke: var(--marker); stroke-width: 10; }
+.die.selected, button.die.selected:hover:not(:disabled) { transform: translateY(-8px); }
+/* Selected: lifted, with a tomato shadow (a marker outline would vanish on yellow dice). */
+.die.selected .die-shadow > * { fill: var(--tomato); }
+.die.selected .die-shadow { transform: translate(9px, 9px); }
+.die.selected .die-outline > * { stroke-width: 8; }
+.die.selected::after {
+    content: '';
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    bottom: -12px;
+    height: 5px;
+    background: var(--ink);
+}
 
 .die-new {
     position: absolute;
@@ -353,6 +365,7 @@ body.my-turn .hand-panel { box-shadow: 6px 6px 0 var(--tomato); }
     .seats { display: flex; flex-wrap: wrap; gap: 8px; }
     .seat { flex: 1 1 140px; border: 2px solid var(--ink); }
     .seat:last-child { border-bottom: 2px solid var(--ink); }
+    .table-panel { min-height: 120px; }
 }
 
 @media (max-width: 600px) {

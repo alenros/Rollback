@@ -230,10 +230,10 @@ export function renderRoundPanel(state: GameState, view: ViewState): string {
         const winners = standings(state).filter(s => s.rank === 1).map(s => escapeHtml(s.name));
         return `<h3>Game over — ${winners.join(' & ')} ${winners.length > 1 ? 'win' : 'wins'}!</h3>
             <ol class="round-results">${results}</ol>${totals}
-            <button id="home-btn" type="button">Back to home</button>`;
+            <button id="home-btn" type="button" class="primary">Back to home</button>`;
     }
     const action = view.isHost
-        ? `<button id="next-round-btn" type="button">Start round ${state.round + 1}</button>`
+        ? `<button id="next-round-btn" type="button" class="primary">Start round ${state.round + 1}</button>`
         : '<p class="hint">Waiting for the host to start the next round…</p>';
     return `<h3>Round ${state.round} results</h3><ol class="round-results">${results}</ol>${totals}${action}`;
 }
