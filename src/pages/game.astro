@@ -102,7 +102,7 @@ import Layout from '../components/Layout.astro';
             view.animate = elapsed < ROLL_ANIMATION_MS ? rolledIds : new Set();
             view.animateElapsedMs = elapsed;
 
-            $('game-header').innerHTML = renderHeader(state);
+            $('game-header').innerHTML = renderHeader(state, view);
             $('seats').innerHTML = renderSeats(state, view);
             $('table-play').innerHTML = renderTable(state, view);
             $('hand').innerHTML = renderHand(state, view);

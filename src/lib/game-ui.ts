@@ -51,7 +51,8 @@ export interface DieOptions {
 export function dieHtml(die: Die, opts: DieOptions = {}): string {
     const shape = SHAPES[die.sides];
     const label = `${die.color} d${die.sides} showing ${die.value}${opts.fresh ? ', just rolled' : ''}`;
-    const inner = `<svg class="die-shape" viewBox="0 0 100 100" aria-hidden="true">`
+    const inner = `<svg class="die-shape" viewBox="-4 -4 112 112" aria-hidden="true">`
+        + `<g class="die-shadow" transform="translate(6 6)">${shape.outline}</g>`
         + `<g class="die-outline">${shape.outline}</g>`
         + `<text class="die-value" x="50" y="${shape.valueY}">${die.value}</text></svg>`
         + (opts.fresh ? '<span class="die-new" aria-hidden="true">new</span>' : '');
@@ -72,11 +73,15 @@ export function sortDice(dice: readonly Die[], mode: SortMode): Die[] {
         : a.value - b.value || byColor(a, b));
 }
 
-export function renderHeader(state: GameState): string {
-    const turn = state.phase === 'playing'
-        ? `<span class="turn-name">${nameOf(state, state.turn)}</span>'s turn`
-        : state.phase === 'roundOver' ? 'Round over' : 'Game over';
-    return `<div>Round ${state.round} / ${state.totalRounds} <span class="ruleset-name">${escapeHtml(rulesOf(state).name)}</span></div><div>${turn}</div>`;
+export function renderHeader(state: GameState, view: ViewState): string {
+    const round = `<span class="label">Round ${state.round} / ${state.totalRounds}</span>`
+        + ` <span class="tag ruleset-name">${escapeHtml(rulesOf(state).name)}</span>`;
+    const turn = state.phase !== 'playing'
+        ? `<span class="label">${state.phase === 'roundOver' ? 'Round over' : 'Game over'}</span>`
+        : state.turn === view.meId
+            ? '<span class="tag tag-marker turn-tag">Your turn</span>'
+            : `<span class="label turn-text"><span class="turn-name">${nameOf(state, state.turn)}</span>'s turn</span>`;
+    return `<div class="game-top-round">${round}</div><div class="game-top-turn">${turn}</div>`;
 }
 
 export function renderSeats(state: GameState, view: ViewState): string {
