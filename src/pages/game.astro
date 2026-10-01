@@ -86,7 +86,7 @@ import Layout from '../components/Layout.astro';
             animate: new Set(),
             animateElapsedMs: 0,
             tableSelection: null,
-            sortBy: localStorage.getItem('rollbackSort') === 'value' ? 'value' : 'color',
+            sortBy: localStorage.getItem('rollbackSort') === 'color' ? 'color' : 'value',
         };
 
         function flash(text: string) {
